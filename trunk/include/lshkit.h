@@ -22,17 +22,12 @@
  *
  * \author Wei Dong \f$ wdong@cs.princeton.edu \f$
  * \author 2008-2009
- * \section download_sec 1. Getting LSHKIT
+ * \section download_sec 1. Getting LSH
  *
- *  - LSHKIT Source code: http://www.cs.princeton.edu/~wdong/lshkit/release
- *
- *    Last update: 2009-02-10
- *      -# Added a program to linear scan the dataset and generate benchmark (tools/scan.cpp).
- *      -# Added a example of filtering with sketches (tools/sketch-run.cpp).
- *      -# Fixed tons bugs.
- *      -# The adaptive probing algorithm of MPLSH works now.
- *
- *  - Windows binary: http://www.cs.princeton.edu/~wdong/lshkit/lshkit-win32.zip
+ *  - Sourceforge projet page: http://sourceforge.net/projects/lshkit/
+ *  - Browser source code: http://lshkit.cvs.sourceforge.net/lshkit/
+ *  - Download a release: http://sourceforge.net/project/showfiles.php?group_id=253020
+ *  - Mailing list: http://sourceforge.net/mailarchive/forum.php?forum_name=lshkit-users
  *  - Sample dataset: http://www.cs.princeton.edu/~wdong/lshkit/audio.tar.gz
  *
  * The sample dataset include the data file audio.data and a benchmark file

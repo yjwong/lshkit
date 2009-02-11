@@ -1,17 +1,21 @@
 A C++ LSH Library
 
+NOTE:
+API DESCRIPTION IN THIS FILE MAY BE OUTDATED, SEE THE DOXYGEN GENERATED DOCUMENTATION FOR
+UP-TO-DATE DESCRIPTION.
+
+
 1. Introduction
 
 The goal of this library is to:
-	* provide a general and flexible framework of creating and compositing LSH
-	* put all our LSH related researches (LSH based index, sketch, set embedding) together.
+	* Provide a general and flexible framework of creating and compositing LSH families.
+	* Put all our LSH related researches (LSH based index, sketch, set embedding) together.
 
 The library is currently made up of the following components:
-	1. a set of LSH proposed by previous researches, including
+	1. a set of LSH families proposed by previous researches, including
 		- stable distribution (Gaussian, Cauchy) based LSH
 		- random hyperplane based LSH
-		- more to be added
-	2. a set of LSH composite methods to create new LSHs from existing ones
+	2. a set of LSH composition methods to create new LSHs from existing ones
 	3. an LSH based indexing data structure (multi-probe LSH)
 	4. an LSH based sketch construction algorithm
 	5. an LSH based set embedding algorithm
@@ -135,7 +139,7 @@ where a is a point sampled uniformly at random from the unit hypersphere.
 * More are to be added.
 
 
-4. LSH Manipulators
+4. LSH Composition
 
 The library provides the following LSH compositions.
 
@@ -147,7 +151,10 @@ The library provides the following LSH compositions.
 	{
 		......
 	public:
-	    typedef std::pair<unsigned, typename LSH::Parameter> Parameter;
+	    struct Parameter: public LSH::Parameter  {
+		unsigned range;
+	    };
+
 	    typedef typename LSH::Domain Domain;
 		......
 	};
@@ -159,7 +166,8 @@ The library provides the following LSH compositions.
 	{
 		......
 	public:
-	    typedef std::pair<unsigned, typename LSH::Parameter> Parameter;
+	    struct Parameter: public LSH::Parameter  {
+	    };
 	    typedef typename LSH::Domain Domain;
 		......
 	};
@@ -193,8 +201,9 @@ And the DeltaLSH version of LSB.
 	{
 		......
 	public:
-	    // Parameter.first = repeat #
-	    typedef std::pair<unsigned, typename LSH::Parameter> Parameter;
+	    struct Parameter: public LSH::Parameter  {
+		unsigned repeat;
+	    };
 	    typedef typename LSH::Domain Domain;
 		......
 	};
@@ -207,13 +216,15 @@ And the DeltaLSH version of LSB.
 	{
 		......
 	public:
-	    typedef std::pair<unsigned, typename LSH::Parameter> Parameter;
+	    struct Parameter: public LSH::Parameter  {
+		unsigned xor_;
+	    };
 	    typedef typename LSH::Domain Domain;
 		......
 	};
 
 
-There is also a DeltaLSH version of LSH, if the basic LSH is a DeltaLSH.
+There is also a DeltaLSH version of Xor, if the basic LSH is a DeltaLSH.
 
 	template <typename LSH>
 	class DeltaXor
@@ -221,7 +232,9 @@ There is also a DeltaLSH version of LSH, if the basic LSH is a DeltaLSH.
     	    BOOST_CONCEPT_ASSERT((LshConcept<LSH>));
 		......
 	public:
-	    typedef std::pair<unsigned, typename LSH::Parameter> Parameter;
+	    struct Parameter: public LSH::Parameter  {
+		unsigned xor_;
+	    };
 	    typedef typename LSH::Domain Domain;
 		......
 	};
