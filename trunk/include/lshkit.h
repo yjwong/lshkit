@@ -38,6 +38,11 @@
  *
  * \section build_sec 2. Building LSHKIT
  *
+ * NOTE: You don't have to build LSHKIT separatly if you only want to use the
+ * library but not the tool programs.  Instead, you can directly merge the LSHKIT
+ * source files to your project.  You can avoid installing CMake by doing this.
+ * See Section 3.2 for details.
+ *
  * LSHKIT requires the following libraries:
  * - Gnu Scientific Library
  * - [OPTIONAL] Boost Library > 1.36, the following packages are used:
@@ -108,13 +113,18 @@
  *    by your C++ compiler.  If you don't have Boost installed in your system, you'll also need to add
  *    "LSHKIT/3rd-party/boost" to your compiler's include file search path.
  *  -# Add "#include <lshkit.h>" to your C++ source code and you can use most of the LSHKIT functionalities.
+ *  -# Link libgsl and libgslcblas (they may be named differently depending on your system) to your program.
  *
  *  \subsection using_sec_2 3.2 Directly add LSHKIT source to your project
+ *  By directly using the LSHKIT source, you can avoid installing CMake.
+
  *  -# Configure your building environment so that "LSHKIT_DIR/include" and the LSHKIT library can be found
  *    by your C++ compiler.  If you don't have Boost installed in your system, you'll also need to add
  *    "LSHKIT/3rd-party/boost" to your compiler's include file search path.
+ *  -# Make sure that GSL is properly installed in your system and your compiler can find the GSL header files.
  *  -# Add all C++ source files in "LSHKIT/src" to your project.
  *  -# Add "#include <lshkit.h>" to your C++ source code and you can use most of the LSHKIT functionalities.
+ *  -# Link libgsl and libgslcblas (they may be named differently depending on your system) to your program.
  * 
  * \section usecase_sec 4. Some Specific Use Cases
  *  (See the documentation of source files pointed to.)
