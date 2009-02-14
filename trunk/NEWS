@@ -1,4 +1,9 @@
-lshkit 0.1 - 2008-02-11
+lshkit 0.1.1 - 2009-02-14
+ 
+* Added the required Boost source files to the package, so a standalone boost installation is not needed.
+* Reduced dependency on Boost.  Now only boost_program_option needs to be linked for the tools. The main LSHKIT library only depends on Boost header files.
+
+lshkit 0.1 - 2009-02-11
 
 * This is the initial versioned release of LSHKIT.
 * The project is migrated to sourceforge.

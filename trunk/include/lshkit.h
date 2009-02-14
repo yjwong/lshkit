@@ -20,8 +20,10 @@
 /**
  * \mainpage LSHKIT: A C++ Locality Sensitive Hashing Library
  *
- * \author Wei Dong \f$ wdong@cs.princeton.edu \f$
+ * \author Wei Dong \f$ wdong [@] cs.princeton.edu \f$
  * \author 2008-2009
+ * \section update_sec UPDATES
+ * \include ../NEWS
  * \section download_sec 1. Getting LSH
  *
  *  - Sourceforge projet page: http://sourceforge.net/projects/lshkit/
@@ -37,12 +39,9 @@
  * \section build_sec 2. Building LSHKIT
  *
  * LSHKIT requires the following libraries:
- * - Boost Library > 1.36, the following packages are used:
- *   - program_options
- *   - filesystem
- *   - system
- *   - math_c99
  * - Gnu Scientific Library
+ * - [OPTIONAL] Boost Library > 1.36, the following packages are used:
+ *   - program_options
  *
  * LSHKIT uses the CMake cross platform building system. 
  *
@@ -50,20 +49,22 @@
  *
  * The method would probably work for other versions of visual C++, but I haven't tested.
  *
- * You'll probably have to install Boost, GSL and CMake first if you haven't.
+ * You'll have to install GSL and CMake first if you haven't.
  * Refer to the following pages:
- *  - Boost: http://www.boost.org/doc/libs/1_35_0/more/getting_started/windows.html
  *  - GSL: http://www.quantcode.com/modules/smartfaq/faq.php?faqid=33
  *  - CMake: http://www.cmake.org/
  *  
  * After installing everything, you still need the following configurations so
- * that CMake can find BOOST and GSL:
+ * that CMake can find GSL:
  *  - Add an environment variable GSL_ROOT_DIR, so that \%GSL_ROOT_DIR\%\\include
  *    contains the GSL header files and \%GSL_ROOT_DIR\%\\lib contains the GSL libraries.
- *  - Add an environment variable BOOST_ROOT, so that \%BOOST_ROOT\%\\include
- *    contains the Boost header files and \%BOOST_ROOT\%\\lib contains the Boost libraries.
  *  - Copy the file lshkit\FindGSL.cmake to <CMAKE_HOME>\\share\\cmake-xxx\\Modules, where
  *    <CMAKE_HOME> is where you install CMake.
+ *
+ * If you have Boost installed in your system, you can choose to use your own Boost installation
+ * instead of the minimal one comes with LSHKIT.  To do that, add an environment
+ * variable BOOST_ROOT, so that \%BOOST_ROOT\%\\include contains the Boost
+ * header files and \%BOOST_ROOT\%\\lib contains the Boost libraries.
  *
  * We are now ready to build LSHKIT.  Open the Visual C++ command prompt (by clicking
  * "Start/All Programs/Microsoft Visual C++.../Visual Studio Tools/Visual
@@ -97,9 +98,23 @@
  *
  * \section using_sec 3. Using LSHKIT in Your Project
  *
- *  - Configure your building environment so that "LSHKIT_DIR/include" and the LSHKIT library can be found
- *    by your C++ compiler.
- *  - Add "#include <lshkit.h>" to your C++ source code and you can use most of the LSHKIT functionalities.
+ *  Although the LSHKIT tool programs depends on boost_program_option to parse command line options,
+ *  the main LSHKIT library only depends on the Boost headers.  If you use LSHKIT library in your project,
+ *  you don't need to link to any of the boost library (unless you use them in other parts of your project). 
+ *
+ *  \subsection using_sec_1 3.1 Use LSHKIT as a library
+ *  -# Build LSHKIT.
+ *  -# Configure your building environment so that "LSHKIT_DIR/include" and the LSHKIT library can be found
+ *    by your C++ compiler.  If you don't have Boost installed in your system, you'll also need to add
+ *    "LSHKIT/3rd-party/boost" to your compiler's include file search path.
+ *  -# Add "#include <lshkit.h>" to your C++ source code and you can use most of the LSHKIT functionalities.
+ *
+ *  \subsection using_sec_2 3.2 Directly add LSHKIT source to your project
+ *  -# Configure your building environment so that "LSHKIT_DIR/include" and the LSHKIT library can be found
+ *    by your C++ compiler.  If you don't have Boost installed in your system, you'll also need to add
+ *    "LSHKIT/3rd-party/boost" to your compiler's include file search path.
+ *  -# Add all C++ source files in "LSHKIT/src" to your project.
+ *  -# Add "#include <lshkit.h>" to your C++ source code and you can use most of the LSHKIT functionalities.
  * 
  * \section usecase_sec 4. Some Specific Use Cases
  *  (See the documentation of source files pointed to.)
