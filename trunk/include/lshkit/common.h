@@ -36,10 +36,10 @@
 /** Concept checking requires boost > 1.35.
   * Remove this definition to disable concept checking.
   */
-#define CONCEPT_CHECK 0
+#define CONCEPT_CHECK 1
 
 #ifdef CONCEPT_CHECK
-#include <lshkit/concept.inc>
+#include <lshkit/concept.h>
 #else
 #define BOOST_CONCEPT_ASSERT(A)
 #endif
