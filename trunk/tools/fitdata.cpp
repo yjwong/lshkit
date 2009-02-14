@@ -47,7 +47,6 @@ Allowed options:
 
 
 #include <cstdlib>
-#include <boost/tr1/cmath.hpp>
 #include <gsl/gsl_multifit.h>
 #include <boost/program_options.hpp>
 #include <boost/progress.hpp>
@@ -57,6 +56,11 @@ using namespace std;
 using namespace lshkit;
 using namespace tr1;
 namespace po = boost::program_options; 
+
+bool is_good_value (double v) {
+    return ((v > -std::numeric_limits<double>::max())
+                    && (v < std::numeric_limits<double>::max()));
+}
 
 int main (int argc, char *argv[])
 {
@@ -112,7 +116,7 @@ int main (int argc, char *argv[])
                 if (i == j) continue;
                 dist = l2sqr(data[idx[i]], data[idx[j]]);
                 logdist = log(dist);
-                if (tr1::isnormal(logdist)) break;
+                if (is_good_value(logdist)) break;
             }
             gM += dist;
             gG += logdist;
@@ -157,7 +161,7 @@ int main (int argc, char *argv[])
                 if (i != id) 
                 {
                     float d = l2sqr(data[idx[id]], data[idx[i]]);
-                    if (tr1::isnormal(log(double(d)))) topks[j] << Topk<unsigned>::Element(i, d);
+                    if (is_good_value(log(double(d)))) topks[j] << Topk<unsigned>::Element(i, d);
                 }
             }
         }

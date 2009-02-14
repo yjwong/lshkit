@@ -53,7 +53,6 @@ Allowed options:
 
 #include <boost/program_options.hpp>
 #include <boost/progress.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/timer.hpp>
 #include <lshkit.h>
@@ -72,8 +71,7 @@ int main (int argc, char *argv[])
     unsigned M;
     unsigned Q, K, C;
     bool do_benchmark = true;
-    bool load_index = false; // load the index from a file
-    bool save_index = false; // save the index to file
+    bool use_index = false; // load the index from a file
     bool do_asym = false;
 
     boost::timer timer;
@@ -111,11 +109,7 @@ int main (int argc, char *argv[])
     }
 
     if (vm.count("index") == 1) {
-        if (boost::filesystem::exists(index_file)) {
-            load_index = true;
-        } else {
-            save_index = true;
-        }
+        use_index = true;
     }
 
     cout << "LOADING DATA..." << endl;
@@ -128,19 +122,25 @@ int main (int argc, char *argv[])
     MySketch sketcher;
     Matrix<unsigned char> index;
 
-    if (load_index) {
-        cout << "LOADING INDEX..." << endl;
-        timer.restart();
-        {
-            ifstream is(index_file.c_str(), ios_base::binary);
+    bool index_loaded = false;
+
+    if (use_index) {
+        ifstream is(index_file.c_str(), ios_base::binary);
+        if (is) {
             is.exceptions(ios_base::eofbit | ios_base::failbit | ios_base::badbit);
+            cout << "LOADING INDEX..." << endl;
+            timer.restart();
             sketcher.load(is);
             index.load(is);
+            verify(is);
+            verify(M <= sketcher.getChunks());
+            cout << boost::format("LOAD TIME: %1%s.") % timer.elapsed() << endl;
+            index_loaded = true;
         }
-        cout << boost::format("LOAD TIME: %1%s.") % timer.elapsed() << endl;
-        verify(M <= sketcher.getChunks());
     }
-    else {
+
+    if (!index_loaded) {
+
         // We define a short name for the MPLSH index.
         MySketch::Parameter param;
 
@@ -169,7 +169,7 @@ int main (int argc, char *argv[])
         }
         cout << boost::format("CONSTRUCTION TIME: %1%s.") % timer.elapsed() << endl;
 
-        if (save_index) {
+        if (use_index) {
             timer.restart();
             cout << "SAVING INDEX..." << endl;
             {

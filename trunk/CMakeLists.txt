@@ -16,9 +16,15 @@ SET(CMAKE_DEBUG_POSTFIX _debug)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 SET(Boost_USE_STATIC_LIBS ON)
 #SET(BUILD_SHARED_LIBS FALSE)
-FIND_PACKAGE(Boost 1.35 REQUIRED COMPONENTS program_options filesystem system
-    math_c99)
 FIND_PACKAGE(GSL) 
+#FIND_PACKAGE(Boost 1.35 REQUIRED COMPONENTS program_options)
+
+IF (NOT Boost_FOUND)
+SET(Boost_INCLUDE_DIR ${LSHKIT_SOURCE_DIR/3rd-party/boost/boost})
+SET(Boost_LIBRARIES boost_program_options)
+ADD_SUBDIRECTORY("3rd-party/boost/libs/program_options/src/")
+ENDIF (NOT Boost_FOUND)
+
 
 INCLUDE_DIRECTORIES(${LSHKIT_SOURCE_DIR}/include ${GSL_INCLUDE_DIR}
     ${Boost_INCLUDE_DIR})

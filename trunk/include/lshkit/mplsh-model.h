@@ -20,7 +20,6 @@
 #define __LSHKIT_MPLSH_MODEL__
 
 #include <fstream>
-#include <boost/tr1/cmath.hpp>
 #include <boost/math/distributions/gamma.hpp>
 #include <boost/math/distributions/normal.hpp>
 #include <lshkit/matrix.h>
@@ -202,7 +201,7 @@ public:
         unsigned d;
         if (dist < min_) return 1.0;
         if (!(dist < max_)) return 0.0;
-        d = std::tr1::round((log(dist) - lmin_) * step_ / (lmax_ - lmin_));
+        d = std::floor((log(dist) - lmin_) * step_ / (lmax_ - lmin_) + 0.5);
         return table_[T-1][d];
     }
 

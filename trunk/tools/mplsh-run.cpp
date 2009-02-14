@@ -19,7 +19,6 @@
 
 #include <boost/program_options.hpp>
 #include <boost/progress.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/timer.hpp>
 #include <lshkit.h>
@@ -127,8 +126,7 @@ int main (int argc, char *argv[])
     unsigned Q, K, T;
     bool do_recall = false;
     bool do_benchmark = true;
-    bool load_index = false; // load the index from a file
-    bool save_index = false; // save the index to file
+    bool use_index = false; // load the index from a file
 
     boost::timer timer;
 
@@ -168,11 +166,7 @@ int main (int argc, char *argv[])
     }
 
     if (vm.count("index") == 1) {
-        if (boost::filesystem::exists(index_file)) {
-            load_index = true;
-        } else {
-            save_index = true;
-        }
+        use_index = true;
     }
 
     cout << "LOADING DATA..." << endl;
@@ -185,17 +179,23 @@ int main (int argc, char *argv[])
     FloatMatrix::Accessor accessor(data);
     Index index(accessor);
 
-    if (load_index) {
-        cout << "LOADING INDEX..." << endl;
-        timer.restart();
-        {
-            ifstream is(index_file.c_str(), ios_base::binary);
+    // try loading index
+    bool index_loaded = false;
+
+    if (use_index) {
+        ifstream is(index_file.c_str(), ios_base::binary);
+        if (is) {
             is.exceptions(ios_base::eofbit | ios_base::failbit | ios_base::badbit);
+            cout << "LOADING INDEX..." << endl;
+            timer.restart();
             index.load(is);
+            verify(is);
+            cout << boost::format("LOAD TIME: %1%s.") % timer.elapsed() << endl;
+            index_loaded = true;
         }
-        cout << boost::format("LOAD TIME: %1%s.") % timer.elapsed() << endl;
     }
-    else {
+
+    if (!index_loaded) {
         // We define a short name for the MPLSH index.
         Index::Parameter param;
 
@@ -226,7 +226,7 @@ int main (int argc, char *argv[])
         }
         cout << boost::format("CONSTRUCTION TIME: %1%s.") % timer.elapsed() << endl;
 
-        if (save_index) {
+        if (use_index) {
             timer.restart();
             cout << "SAVING INDEX..." << endl;
             {
