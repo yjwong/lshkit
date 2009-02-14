@@ -20,7 +20,7 @@
 /**
  * \mainpage LSHKIT: A C++ Locality Sensitive Hashing Library
  *
- * \author Wei Dong \f$ wdong [@] cs.princeton.edu \f$
+ * \author Wei Dong  wdong [@] cs.princeton.edu 
  * \author 2008-2009
  * \section update_sec UPDATES
  * \include ../NEWS
