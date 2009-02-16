@@ -19,15 +19,21 @@ SET(Boost_USE_STATIC_LIBS ON)
 FIND_PACKAGE(GSL) 
 #FIND_PACKAGE(Boost 1.35 REQUIRED COMPONENTS program_options)
 
-IF (NOT Boost_FOUND)
-SET(Boost_INCLUDE_DIR ${LSHKIT_SOURCE_DIR/3rd-party/boost})
+IF (Boost_FOUND)
+ELSE (Boost_FOUND)
+SET(Boost_INCLUDE_DIR ${LSHKIT_SOURCE_DIR}/3rd-party/boost)
+MESSAGE(${Boost_INCLUDE_DIR})
 SET(Boost_LIBRARIES boost_program_options)
-ADD_SUBDIRECTORY("3rd-party/boost/libs/program_options/src/")
-ENDIF (NOT Boost_FOUND)
+ENDIF (Boost_FOUND)
 
 INCLUDE_DIRECTORIES(${LSHKIT_SOURCE_DIR}/include ${GSL_INCLUDE_DIR}
     ${Boost_INCLUDE_DIR})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+
+IF (Boost_FOUND)
+ELSE (Boost_FOUND)
+ADD_SUBDIRECTORY("3rd-party/boost/libs/program_options/src/")
+ENDIF (Boost_FOUND)
 
 ADD_SUBDIRECTORY("src")
 ADD_SUBDIRECTORY("tools")
