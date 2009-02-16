@@ -20,7 +20,7 @@ FIND_PACKAGE(GSL)
 #FIND_PACKAGE(Boost 1.35 REQUIRED COMPONENTS program_options)
 
 IF (NOT Boost_FOUND)
-SET(Boost_INCLUDE_DIR ${LSHKIT_SOURCE_DIR/3rd-party/boost/boost})
+SET(Boost_INCLUDE_DIR ${LSHKIT_SOURCE_DIR/3rd-party/boost})
 SET(Boost_LIBRARIES boost_program_options)
 ADD_SUBDIRECTORY("3rd-party/boost/libs/program_options/src/")
 ENDIF (NOT Boost_FOUND)
