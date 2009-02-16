@@ -22,7 +22,6 @@ FIND_PACKAGE(GSL)
 IF (Boost_FOUND)
 ELSE (Boost_FOUND)
 SET(Boost_INCLUDE_DIR ${LSHKIT_SOURCE_DIR}/3rd-party/boost)
-MESSAGE(${Boost_INCLUDE_DIR})
 SET(Boost_LIBRARIES boost_program_options)
 ENDIF (Boost_FOUND)
 
