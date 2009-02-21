@@ -186,12 +186,13 @@ template <typename LSH>
 class LSB: public FixedTail<LSH, 2>
 {
 public:
-    typedef LSH Super;
+    typedef FixedTail<LSH,2> Super;
     /**
      * Parameter is exactly the same as the base class.
      */
-    struct Parameter:public Super::Parameter {
+    struct Parameter: public Super::Parameter {
     };
+
     typedef typename Super::Domain Domain;
 
     LSB () {}

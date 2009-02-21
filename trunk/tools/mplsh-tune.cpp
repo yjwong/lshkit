@@ -151,9 +151,9 @@ static const int MAX_T = 100;
 static const int MIN_M = 1;
 static const int MAX_M = 20;
 
-static const double MIN_W = 0.4;
-static const double MAX_W = 20;
-static const double NUM_W = 100;
+static const double MIN_W = 0.01;
+static const double MAX_W = 10;
+static const double NUM_W = 400;
 static const double DELTA_W = (MAX_W - MIN_W) / NUM_W;
 
 // L, T, M, W
@@ -240,7 +240,10 @@ int main (int argc, char *argv[])
         intervals[3].end = intervals[3].begin + 1;
     }
 
-    MultiProbeLshDataModel local_model(DataParam(data_param), N, K);
+    DataParam param(data_param);
+    double scale = param.scale();
+
+    MultiProbeLshDataModel local_model(param, N, K);
     model = &local_model;
 
     tune::Range range(intervals, intervals + sizeof intervals /sizeof intervals[0]);
@@ -248,9 +251,8 @@ int main (int argc, char *argv[])
     bool ok = tune::Tune(range, constraint, &input);
 
     if (ok) {
-
         cout << boost::format("L = %d\tT = %d\tM = %d\tW = %g\trecall = %g\tcost = %g")
-            % input[0] % input[1] % (MAX_M - input[2]) % (MIN_W + DELTA_W * input[3])
+            % input[0] % input[1] % (MAX_M - input[2]) % ((MIN_W + DELTA_W * input[3]) * sqrt(scale))
             % recall(input) % cost(input) << endl;
     } else {
         cout << "Failed." << endl;

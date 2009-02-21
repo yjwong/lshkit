@@ -1,3 +1,7 @@
+lshkit 0.2
+
+* Added tools/embedder, a sample program of random histogram embedding.
+
 lshkit 0.1.2 - 2009-02-15
 
 * Fixed the boost building problem.

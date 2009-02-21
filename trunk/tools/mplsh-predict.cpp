@@ -72,11 +72,14 @@ int main (int argc, char *argv[])
         return 0;
     }
 
-    MultiProbeLshDataModel model(DataParam(data_param), N, K);
+    DataParam param(data_param);
+    param.scale(w * w);
+
+    MultiProbeLshDataModel model(param, N, K);
     model.setT(T);
     model.setL(L);
     model.setM(M);
-    model.setW(w);
+    model.setW(1.0);
 
     cout << model.avgRecall() << '\t' << model.cost() << endl;
 

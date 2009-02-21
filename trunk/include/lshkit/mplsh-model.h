@@ -96,6 +96,20 @@ public:
         g = std::exp(a_G) * std::pow(double(N), b_G) * std::pow(double(K), c_G);
         return GammaDoubleMLE(m,g);
     }
+
+    void scale (double s) {
+        M /= s;
+        G /= s;
+        a_M /= s;
+        a_G /= s;
+    }
+
+    double scale () {
+        double s = M;
+        scale(s);
+        return s;
+    }
+    
 };
 
 /// Multi-probe LSH parameters.

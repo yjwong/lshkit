@@ -17,11 +17,6 @@
     along with LSHKIT.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- * \file histogram.h
- * \brief  Implementation of random histogram.
- */
-
 #ifndef __LSHKIT_HISTOGRAM__
 #define __LSHKIT_HISTOGRAM__
 
@@ -146,7 +141,7 @@ public:
     }
 
     /// Get the total dimension of the histogram.
-    int getDim () const
+    unsigned dim () const
     {
         return dim_;
     }
@@ -155,7 +150,7 @@ public:
     /**
      * @param out The array to hold the output histogram.
      */
-    void zero (float *out)
+    void zero (float *out) const
     {
         std::fill(out, out + dim_, 0);
     }
@@ -166,7 +161,7 @@ public:
      * @param in The input vector.
      * @param weight Weight of the input vector.
      */
-    void add (float *out, Domain in, float weight = 1.0)
+    void add (float *out, Domain in, float weight = 1.0) const
     {
         unsigned k = 0;
         unsigned base = 0;
