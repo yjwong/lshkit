@@ -100,8 +100,8 @@ public:
     void scale (double s) {
         M /= s;
         G /= s;
-        a_M /= s;
-        a_G /= s;
+        a_M -= std::log(s);
+        a_G -= std::log(s);
     }
 
     double scale () {
