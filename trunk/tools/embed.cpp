@@ -216,7 +216,7 @@ int main (int argc, char *argv[])
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm); 
 
-    if (vm.count("help") || (vm.count("input-dim") < 1))
+    if (vm.count("help") || (vm.count("dim") < 1))
     {
         cout << desc;
         return 0;
@@ -282,7 +282,7 @@ int main (int argc, char *argv[])
 /* !!!!!!!!!!!!!!!!! Modify here for different output format !!!!!!!!!!!!!! */
         if (norm) emb->norm(out);
         os << id;
-        for (unsigned j = 0; j < D; ++j) {
+        for (unsigned j = 0; j < emb->dim(); ++j) {
             os << '\t' << out[j];
         }
         os << endl;
