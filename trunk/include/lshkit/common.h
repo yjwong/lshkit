@@ -30,6 +30,7 @@
 #include <limits>
 #include <vector>
 #include <stdexcept>
+#include <boost/foreach.hpp>
 #include <boost/random.hpp>
 
 /// Enable concept checking.
