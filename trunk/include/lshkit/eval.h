@@ -117,17 +117,22 @@ public:
     void load (std::istream &is)
     {
         std::string line;
-        for (unsigned i = 0; i < Q_; i++) {
-            unsigned k;
-            is >> queries_[i];
+        queries_.clear();
+        topks_.clear();
+        for (;;) {
+            unsigned q, k;
+            is >> q;
+            if (!is) break;
+            queries_.push_back(q);
             is >> k;
-            topks_[i].resize(k);
+            topks_.push_back(Topk<KEY>());
+            topks_.back().resize(k);
             for (unsigned j = 0; j < k; j++) {
-                is >> topks_[i][j].key;
-                is >> topks_[i][j].dist;
+                is >> topks_.back()[j].key;
+                is >> topks_.back()[j].dist;
             }
-            getline(is, line);
         }
+        Q_ = queries_.size();
     }
 
     void save (std::ostream &os) const

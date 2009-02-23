@@ -131,7 +131,9 @@ private:
                 unsigned c = 0;
                 if (!children.empty()) {
                     BOOST_FOREACH(const Node *n, children) {
-                        c += n->scan(tree, val, topk);
+                        if (n != 0) {
+                            c += n->scan(tree, val, topk);
+                        }
                     }
                 }
                 if (!data.empty()) {
@@ -185,6 +187,7 @@ private:
                 unsigned h = lsh[depth](val);
                 cur = cur->children[h];
                 if (cur == 0) break;
+                ++depth;
             }
         }
     };

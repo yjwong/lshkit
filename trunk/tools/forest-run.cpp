@@ -59,7 +59,7 @@ int main (int argc, char *argv[])
     string benchmark;
 
     float R, W;
-    unsigned c, L, D;
+    unsigned c, L, H;
     unsigned Q, K;
     bool do_benchmark = true;
     // bool use_index = false; // load the index from a file
@@ -71,7 +71,7 @@ int main (int argc, char *argv[])
         ("help,h", "produce help message.")
         (",c", po::value<unsigned>(&c)->default_value(20), "# points to scan from each tree")
         (",L", po::value<unsigned>(&L)->default_value(1), "number of trees")
-        (",D", po::value<unsigned>(&D)->default_value(10), "maximal depth of tree")
+        (",H", po::value<unsigned>(&H)->default_value(10), "maximal depth of tree")
         (",W", po::value<float>(&W)->default_value(1.0), "hash function window size")
         (",Q", po::value<unsigned>(&Q)->default_value(100), "number of queries to use")
         (",K", po::value<unsigned>(&K)->default_value(50), "number of nearest neighbors to retrieve")
@@ -152,7 +152,7 @@ int main (int argc, char *argv[])
         param.dim = data.getDim();
         DefaultRng rng;
 
-        index.init(param, rng, L, D);
+        index.init(param, rng, L, H);
         // The accessor.
 
         // Initialize the index structure.  Note L is passed here.
@@ -190,9 +190,9 @@ int main (int argc, char *argv[])
     if (do_benchmark) {
 
         Benchmark<> bench;
-        bench.resize(Q, K);
         cout << "LOADING BENCHMARK..." << endl;
         bench.load(benchmark);
+        bench.resize(Q, K);
         cout << "DONE." << endl;
 
         for (unsigned i = 0; i < Q; ++i)

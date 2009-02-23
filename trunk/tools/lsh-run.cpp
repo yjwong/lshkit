@@ -192,9 +192,9 @@ int main (int argc, char *argv[])
     if (do_benchmark) {
 
         Benchmark<> bench;
-        bench.resize(Q, K);
         cout << "LOADING BENCHMARK..." << endl;
         bench.load(benchmark);
+        bench.resize(Q, K);
         cout << "DONE." << endl;
 
         for (unsigned i = 0; i < Q; ++i)
