@@ -5,10 +5,11 @@ lshkit snapshot last updated 2009-02-23
 * Added tools/embedder.cpp, a sample program of random histogram embedding.
 * Added R-NN (range query) support to Topk.  
 * Added R-NN support in tools/scan.cpp, tools/mplsh-run.cpp, tools/lsh-run.cpp, tools/sketch-run.cpp.  Set K = 0 for R-NN.
+* Added tools/txt2bin.cpp to convert text data file to binary.
 
 lshkit 0.1.2 - 2009-02-15
 
-* Fixed the boost building problem.
+* Minor fix of the included boost distribution, no LSHKIT file touched.
 
 lshkit 0.1.1 - 2009-02-14
  
