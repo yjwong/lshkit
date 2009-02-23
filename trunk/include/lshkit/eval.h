@@ -82,34 +82,34 @@ void SampleQueries (std::vector<unsigned> *qry, unsigned max, RNG
 template <typename KEY = unsigned>
 class Benchmark
 {
-    unsigned K_, Q_;
+    unsigned Q_;
 
     std::vector<unsigned> queries_;
     std::vector<Topk<KEY> > topks_;
 public:
-    Benchmark(): K_(0), Q_(0) {}
+    Benchmark(): Q_(0) {}
 
-    void resize(unsigned K, unsigned Q)
+    void resize(unsigned Q, unsigned K = 0)
     {
-        K_ = K;
         Q_ = Q;
         queries_.resize(Q);
         topks_.resize(Q);
+        if (K > 0) {
+            BOOST_FOREACH(Topk<KEY> &knn, topks_) {
+                if (knn.size() < K) throw std::runtime_error("BENCHMARK NOT LARGE ENOUGH");
+                knn.resize(K);
+            }
+        }
     }
 
     // Random initialization
-    void init(unsigned K, unsigned Q, unsigned maxID) {
-        K_ = K;
+    void init(unsigned Q, unsigned maxID) {
         Q_ = Q;
         queries_.resize(Q);
         topks_.resize(Q);
 
         DefaultRng rng;
         SampleQueries(&queries_, maxID, rng);
-
-        for (unsigned i = 0; i < Q; i++) {
-                topks_[i].reset(K);
-        }
     }
 
     ~Benchmark() {}
@@ -121,7 +121,6 @@ public:
             unsigned k;
             is >> queries_[i];
             is >> k;
-            if ((K_ > 0) && (K_ < k)) k = K_;
             topks_[i].resize(k);
             for (unsigned j = 0; j < k; j++) {
                 is >> topks_[i][j].key;
@@ -157,7 +156,6 @@ public:
         os.close();
     }
 
-    unsigned getK () const { return K_; }
     unsigned getQ () const { return Q_; }
 
     /// Get the ID of the nth query.

@@ -1,6 +1,8 @@
 lshkit 0.2
 
-* Added tools/embedder, a sample program of random histogram embedding.
+* Added tools/embedder.cpp, a sample program of random histogram embedding.
+* Added R-NN support to Topk.  
+* Added R-NN support in tools/scan.cpp.
 
 lshkit 0.1.2 - 2009-02-15
 
