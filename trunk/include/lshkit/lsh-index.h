@@ -178,6 +178,7 @@ public:
     {
 //        if (L == 0) L = lshs_.size();
  //       assert(L <= lshs_.size());
+        accessor_.reset();
         unsigned L = lshs_.size();
         unsigned cnt = 0;
         for (unsigned i = 0; i < L; ++i)

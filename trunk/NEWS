@@ -1,8 +1,9 @@
 lshkit 0.2
 
+* Improved the MPLSH modeling algorithm to make it work with feature vectors with large absolute values.
 * Added a preliminary LSH Forest implementation with an example program tools/forest-run.cpp.
 * Added tools/embedder.cpp, a sample program of random histogram embedding.
-* Added R-NN support to Topk.  
+* Added R-NN (range query) support to Topk.  
 * Added R-NN support in tools/scan.cpp, tools/mplsh-run.cpp, tools/lsh-run.cpp, tools/sketch-run.cpp.  Set K = 0 for R-NN.
 
 lshkit 0.1.2 - 2009-02-15
