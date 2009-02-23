@@ -24,6 +24,7 @@
  * \author 2008-2009
  * \section update_sec UPDATES
  * \include ../NEWS
+ *  - Download the CVS snapshot at http://lshkit.sourceforge.net/release/lshkit-snapshot.tar.gz
  * \section download_sec 1. Getting LSH
  *
  *  - Sourceforge projet page: http://sourceforge.net/projects/lshkit/
