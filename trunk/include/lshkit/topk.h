@@ -95,58 +95,76 @@ struct TopkEntry
 template <class KEY>
 class Topk: public std::vector<TopkEntry<KEY> >
 {
+    unsigned K;
+    float R;
+    float th;
 public:
     typedef TopkEntry<KEY> Element;
     typedef typename std::vector<TopkEntry<KEY> > Base;
 
     Topk () {}
 
-    Topk (unsigned k): Base(k) {}
-
     ~Topk () {}
 
     /// Reset the heap.
-    void reset (unsigned k) { this->resize(k); for (typename Base::iterator it = this->begin(); it != this->end(); ++it) it->reset(); }
+    void reset (unsigned k, float r = std::numeric_limits<float>::max()) {
+        if (k == 0) throw std::invalid_argument("K MUST BE POSITIVE");
+        R = th = r;
+        K = k;
+        this->resize(k);
+        for (typename Base::iterator it = this->begin(); it != this->end(); ++it) it->reset();
+    }
 
-    void reset (unsigned k, KEY key) { this->resize(k); for (typename
+    void reset (unsigned k, KEY key, float r = std::numeric_limits<float>::max()) {
+        if (k == 0) throw std::invalid_argument("K MUST BE POSITIVE");
+        R = th = r;
+        K = k;
+        this->resize(k); for (typename
             Base::iterator it = this->begin(); it != this->end(); ++it) {
         it->reset(); it->key = key; }
     }
 
-    const Element &back () const { return Base::back(); }
+    void reset (float r) {
+        K = 0;
+        R = th = r;
+        this->clear();
+    }
+
+    float threshold () const {
+        return th;
+    }
 
     /// Insert a new element, update the heap.
-    Element operator << (Element t)
+    Topk &operator << (Element t)
     {
-        float MAX = std::numeric_limits<float>::max(); 
+        if (!(t.dist < th)) return *this;
+        if (K == 0) { // R-NN
+            this->push_back(t);
+            return *this;
+        }
+        // K-NN
         unsigned i = this->size() - 1;
         unsigned j;
-        if (t < this->at(i))
+        for (;;)
         {
-            for (;;)
-            {
-                if (i == 0) break;
-                j = i - 1;
-                if ((this->at(j).dist < MAX) && (this->at(j).match(t))) return t; 
-                if (this->at(j) < t) break;
-                i = j;
-            }
-            /* i is the place to insert to */
-
-            Element save = this->back();
-
-            j = this->size() - 1;
-            for (;;)
-            {
-                if (j == i) break;
-                this->at(j) = this->at(j-1);
-                --j;
-            }
-            this->at(i) = t;
-
-            t = save;
+            if (i == 0) break;
+            j = i - 1;
+            if (this->at(j).match(t)) return *this;
+            if (this->at(j) < t) break;
+            i = j;
         }
-        return t;
+        /* i is the place to insert to */
+
+        j = this->size() - 1;
+        for (;;)
+        {
+            if (j == i) break;
+            this->at(j) = this->at(j-1);
+            --j;
+        }
+        this->at(i) = t;
+        th = this->back().dist;
+        return *this;
     }
 
     /// Calculate recall.
@@ -166,6 +184,10 @@ public:
             }
         }
         return float(matched)/float(this->size());
+    }
+
+    unsigned getK () const {
+        return K;
     }
 };
 

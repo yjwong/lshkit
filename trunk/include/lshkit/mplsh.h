@@ -366,6 +366,8 @@ public:
     /// Query for K-NNs, try to achieve the given recall by adaptive probing.
     void query (const Domain &obj, Topk<Key> *topk, float recall, unsigned *pcnt = (unsigned *)0)
     {
+        if (topk->getK() == 0) throw std::logic_error("CANNOT ACCEPT R-NN QUERY");
+        if (topk->getK() != topk->size()) throw std::logic_error("TOPK SIZE != K");
         unsigned L = Super::lshs_.size();
         std::vector<std::vector<unsigned> > seqs(L);
         for (unsigned i = 0; i < L; ++i) Super::lshs_[i].genProbeSequence(obj,
