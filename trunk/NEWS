@@ -1,4 +1,4 @@
-lshkit 0.2
+lshkit snapshot
 
 * Improved the MPLSH modeling algorithm to make it work with feature vectors with large absolute values.
 * Added a preliminary LSH Forest implementation with an example program tools/forest-run.cpp.
