@@ -22,9 +22,14 @@
  * \brief Linear scan dataset and construct benchmark.
  *
  * This program randomly picks Q points from a dataset as queries, and
- * then linear-scan the database to find K-NNs for each query to produce
+ * then linear-scan the database to find K-NN/R-NN for each query to produce
  * a benchmark file.  For each query, the query point itself is excluded
- * from the K-NN list.
+ * from the K-NN/R-NN list.
+ *
+ * You can specify both K and R and the prorgram will search for the K
+ * points closest to queries which are within distance range of R.
+ * If K = 0, then all points within distance range of R are returned.
+ * The default value of R is the maximal value of float.
  *
 \verbatim
 Allowed options:
@@ -56,12 +61,14 @@ int main (int argc, char *argv[])
     string query_file;
 
     unsigned K, Q, metric;
+    float R;
 
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help,h", "produce help message.")
         (",Q", po::value<unsigned>(&Q)->default_value(1), "number of queries to sample.")
         (",K", po::value<unsigned>(&K)->default_value(1), "number of nearest neighbors.")
+        (",R", po::value<float>(&R)->default_value(numeric_limits<float>::max()), "distance range to search for")
         ("metric", po::value<unsigned>(&metric)->default_value(2), "1: L1; 2: L2")
         ("data,D", po::value<string>(&data_file), "dataset path")
         ("benchmark,B", po::value<string>(&query_file), "output benchmark file path")
@@ -81,7 +88,7 @@ int main (int argc, char *argv[])
     Matrix<float> data(data_file);
 
     Benchmark<unsigned> bench;
-    bench.init(K, Q, data.getSize());
+    bench.init(Q, data.getSize());
     boost::timer timer;
 
     timer.restart();
@@ -94,6 +101,7 @@ int main (int argc, char *argv[])
         {
             unsigned q = bench.getQuery(i);
             Topk<unsigned> &topk = bench.getAnswer(i);
+            topk.reset(K, R);
             for (unsigned j = 0; j < data.getSize(); ++j)
             {
                 if (q == j) continue;
@@ -112,6 +120,7 @@ int main (int argc, char *argv[])
         {
             unsigned q = bench.getQuery(i);
             Topk<unsigned> &topk = bench.getAnswer(i);
+            topk.reset(K, R);
             for (unsigned j = 0; j < data.getSize(); ++j)
             {
                 if (q == j) continue;

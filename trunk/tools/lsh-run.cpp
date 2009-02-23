@@ -65,6 +65,7 @@ int main (int argc, char *argv[])
     string benchmark;
     string index_file;
 
+    float R;
     unsigned M, L, H;
     unsigned Q, K;
     bool do_benchmark = true;
@@ -79,6 +80,7 @@ int main (int argc, char *argv[])
         (",L", po::value<unsigned>(&L)->default_value(1), "number of hash tables")
         (",Q", po::value<unsigned>(&Q)->default_value(100), "number of queries to use")
         (",K", po::value<unsigned>(&K)->default_value(50), "number of nearest neighbors to retrieve")
+        (",R", po::value<float>(&R)->default_value(numeric_limits<float>::max()), "R-NN distance range")
         ("data,D", po::value<string>(&data_file), "dataset path")
         ("benchmark,B", po::value<string>(&benchmark), "benchmark path")
         ("index", po::value<string>(&index_file), "index file")
@@ -190,7 +192,7 @@ int main (int argc, char *argv[])
     if (do_benchmark) {
 
         Benchmark<> bench;
-        bench.resize(K, Q);
+        bench.resize(Q, K);
         cout << "LOADING BENCHMARK..." << endl;
         bench.load(benchmark);
         cout << "DONE." << endl;
@@ -215,7 +217,7 @@ int main (int argc, char *argv[])
             for (unsigned i = 0; i < Q; ++i)
             {
                 unsigned cnt;
-                topk.reset(K);
+                topk.reset(K, R);
                 index.query(data[bench.getQuery(i)], &topk, &cnt);
                 recall << bench.getAnswer(i).recall(topk);
                 cost << double(cnt)/double(data.getSize());

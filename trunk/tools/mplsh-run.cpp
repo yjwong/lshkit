@@ -38,18 +38,19 @@
   *
 \verbatim
 Allowed options:
-  -h [ --help ]            produce help message.
+  -h [ --help ]                   produce help message.
   -W [ -- ] arg (=1)
   -M [ -- ] arg (=1)
-  -T [ -- ] arg (=1)       # probes / hash table
-  -L [ -- ] arg (=1)       # hash tables
-  -Q [ -- ] arg (=100)     # queries
-  -K [ -- ] arg (=50)      # nearest neighbor to retrieve
-  -R [ --recall ] arg      desired recall
-  -D [ --data ] arg        data file
-  -B [ --benchmark ] arg   benchmark file
-  --index arg              index file
-  -H [ -- ] arg (=1017881) hash table size, use the default value.
+  -T [ -- ] arg (=1)              # probes
+  -L [ -- ] arg (=1)              # hash tables
+  -Q [ -- ] arg (=100)            # queries
+  -K [ -- ] arg (=50)             # nearest neighbor to retrieve
+  -R [ -- ] arg (=3.40282347e+38) R-NN distance range
+  --recall arg                    desired recall
+  -D [ --data ] arg               data file
+  -B [ --benchmark ] arg          benchmark file
+  --index arg                     index file
+  -H [ -- ] arg (=1017881)        hash table size, use the default value.
 \endverbatim
   */
 
@@ -121,7 +122,7 @@ int main (int argc, char *argv[])
     string benchmark;
     string index_file;
 
-    float W, R = 1.0;
+    float W, R, desired_recall = 1.0;
     unsigned M, L, H;
     unsigned Q, K, T;
     bool do_recall = false;
@@ -139,7 +140,8 @@ int main (int argc, char *argv[])
         (",L", po::value<unsigned>(&L)->default_value(1), "# hash tables")
         (",Q", po::value<unsigned>(&Q)->default_value(100), "# queries")
         (",K", po::value<unsigned>(&K)->default_value(50), "# nearest neighbor to retrieve")
-        ("recall,R", po::value<float>(&R), "desired recall")
+        (",R", po::value<float>(&R)->default_value(numeric_limits<float>::max()), "R-NN distance range")
+        ("recall", po::value<float>(&desired_recall), "desired recall")
         ("data,D", po::value<string>(&data_file), "data file")
         ("benchmark,B", po::value<string>(&benchmark), "benchmark file")
         ("index", po::value<string>(&index_file), "index file")
@@ -159,6 +161,9 @@ int main (int argc, char *argv[])
     if (vm.count("recall") >= 1)
     {
         do_recall = true;
+        if (K == 0) {
+            cerr << "Automatic probing does not support R-NN query." << endl;
+        }
     }
 
     if ((Q == 0) || (vm.count("benchmark") == 0)) {
@@ -241,7 +246,7 @@ int main (int argc, char *argv[])
     if (do_benchmark) {
 
         Benchmark<> bench;
-        bench.resize(K, Q);
+        bench.resize(Q, K);
         cout << "LOADING BENCHMARK..." << endl;
         bench.load(benchmark);
         cout << "DONE." << endl;
@@ -270,8 +275,8 @@ int main (int argc, char *argv[])
             {
                 unsigned cnt;
                 // Query for one point.
-                topk.reset(K);
-                index.query(data[bench.getQuery(i)], &topk, R, &cnt);
+                topk.reset(K, R);
+                index.query(data[bench.getQuery(i)], &topk, desired_recall, &cnt);
                 recall << bench.getAnswer(i).recall(topk);
                 cost << double(cnt)/double(data.getSize());
                 ++progress;
@@ -284,7 +289,7 @@ int main (int argc, char *argv[])
             for (unsigned i = 0; i < Q; ++i)
             {
                 unsigned cnt;
-                topk.reset(K);
+                topk.reset(K, R);
                 index.query(data[bench.getQuery(i)], &topk, T, &cnt);
                 recall << bench.getAnswer(i).recall(topk);
                 cost << double(cnt)/double(data.getSize());

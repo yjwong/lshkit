@@ -67,7 +67,7 @@ int main (int argc, char *argv[])
     string index_file;
     string benchmark;
 
-    float W;
+    float W, R;
     unsigned M;
     unsigned Q, K, C;
     bool do_benchmark = true;
@@ -84,6 +84,7 @@ int main (int argc, char *argv[])
         (",C", po::value(&C)->default_value(10), "# candidates = C x K")
         (",Q", po::value(&Q)->default_value(100), "# queries to use")
         (",K", po::value(&K)->default_value(50), "K-NNs retrieved")
+        (",R", po::value(&R)->default_value(numeric_limits<float>::max()), "R-NN distnace range")
         ("data,D", po::value(&data_file), "data file")
         ("benchmark,B", po::value(&benchmark), "benchmark file")
         ("index", po::value(&index_file), "sketch file")
@@ -187,7 +188,7 @@ int main (int argc, char *argv[])
     if (do_benchmark) {
 
         Benchmark<> bench;
-        bench.resize(K, Q);
+        bench.resize(Q, K);
         cout << "LOADING BENCHMARK..." << endl;
         bench.load(benchmark);
         cout << "DONE." << endl;
@@ -218,8 +219,8 @@ int main (int argc, char *argv[])
             {
                 // Query for one point.
                 unsigned query = bench.getQuery(i);
-                candidate.reset(C * K);
-                topk.reset(K);
+                candidate.reset(C * K, R);
+                topk.reset(K, R);
 
                 sketcher.apply(data[query], query_sketch, asym);
                 helper.update(query_sketch, asym);
@@ -251,8 +252,8 @@ int main (int argc, char *argv[])
             {
                 // Query for one point.
                 unsigned query = bench.getQuery(i);
-                candidate.reset(C * K);
-                topk.reset(K);
+                candidate.reset(C * K, R);
+                topk.reset(K, R);
 
                 sketcher.apply(data[query], query_sketch);
                 for (unsigned j = 0; j < index.getSize(); ++j) {
