@@ -187,6 +187,7 @@
 #include <lshkit/metric.h>
 #include <lshkit/kernel.h>
 #include <lshkit/mplsh.h>
+#include <lshkit/forest.h>
 #include <lshkit/topk.h>
 #include <lshkit/matrix.h>
 #include <lshkit/eval.h>

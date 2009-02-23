@@ -1,5 +1,6 @@
 lshkit 0.2
 
+* Added a preliminary LSH Forest implementation with an example program tools/forest-run.cpp.
 * Added tools/embedder.cpp, a sample program of random histogram embedding.
 * Added R-NN support to Topk.  
 * Added R-NN support in tools/scan.cpp, tools/mplsh-run.cpp, tools/lsh-run.cpp, tools/sketch-run.cpp.  Set K = 0 for R-NN.
