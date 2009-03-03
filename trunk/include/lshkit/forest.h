@@ -59,24 +59,23 @@
 namespace lshkit {
 
 /// LSH Forest index
-template <typename LSH, typename ACCESSOR, typename METRIC>
+/**
+  * @param LSH LSH class.
+  * @param KEY key type.
+  */
+template <typename LSH, typename KEY>
 class ForestIndex
 {
     BOOST_CONCEPT_ASSERT((LshConcept<LSH>));
 public:
     typedef typename LSH::Parameter Parameter;
     typedef typename LSH::Domain Domain;
-    typedef typename ACCESSOR::Key Key;
+    typedef KEY Key;
 
 private:
 
-    ACCESSOR accessor;
-    METRIC metric;
-
-
     struct Tree
     {
-        ForestIndex *forest;  // to access accessor and metric
         std::vector<LSH> lsh; // the hash functions
 
         struct Node
@@ -98,8 +97,8 @@ private:
                 return size == 0;
             }
 
-            void insert (Tree *tree, unsigned depth, Key key) {
-                ACCESSOR &acc = tree->forest->accessor;
+            template <typename ACCESSOR>
+            void insert (Tree *tree, unsigned depth, Key key, ACCESSOR &acc) {
                 ++size;
                 if (children.empty()) {
                     data.push_back(key);
@@ -113,7 +112,7 @@ private:
                             if (children[h] == 0) {
                                 children[h] = new Node();
                             }
-                            children[h]->insert(tree, depth+1, key);
+                            children[h]->insert(tree, depth+1, key, acc);
                         }
                         data.clear();
                     }
@@ -123,31 +122,24 @@ private:
                     if (children[h] == 0) {
                         children[h] = new Node();
                     }
-                    children[h]->insert(tree, depth+1, key);
+                    children[h]->insert(tree, depth+1, key, acc);
                 }
             }
 
-            unsigned scan (Tree *tree, Domain val, Topk<Key> *topk) const {
-                unsigned c = 0;
+            template <typename SCANNER>
+            void scan (Tree *tree, Domain val, SCANNER &scanner) const {
                 if (!children.empty()) {
                     BOOST_FOREACH(const Node *n, children) {
                         if (n != 0) {
-                            c += n->scan(tree, val, topk);
+                            n->scan(tree, val, scanner);
                         }
                     }
                 }
                 if (!data.empty()) {
-                    ACCESSOR &acc = tree->forest->accessor;
-                    METRIC &m = tree->forest->metric;
                     BOOST_FOREACH(Key key, data) {
-                        if (acc.mark(key)) {
-                            ++c;
-                            (*topk) << typename Topk<Key>::Element(key, m(val,
-                                        acc(key)));
-                        }
+                        scanner(key);
                     }
                 }
-                return c;
             }
         } *root;
 
@@ -157,9 +149,8 @@ private:
         }
 
         template <typename ENGINE>
-        void reset (const Parameter &param, ENGINE &engine, ForestIndex *f, unsigned depth)
+        void reset (const Parameter &param, ENGINE &engine, unsigned depth)
         {
-            forest = f;
             lsh.resize(depth);
             BOOST_FOREACH(LSH &h, lsh) {
                 h.reset(param, engine);
@@ -172,9 +163,10 @@ private:
             if (root != 0) delete root;
         }
 
-        void insert (Key key)
+        template <typename ACCESSOR>
+        void insert (Key key, ACCESSOR &acc)
         {
-            root->insert(this, 0, key);
+            root->insert(this, 0, key, acc);
         }
 
         void lookup (Domain val, std::vector<const Node *> *nodes) const {
@@ -198,8 +190,7 @@ private:
     
 
 public:
-    ForestIndex(ACCESSOR acc, METRIC m) : 
-        accessor(acc), metric(m)
+    ForestIndex() 
     {
     }
 
@@ -215,26 +206,34 @@ public:
     {
         trees.resize(L);
         BOOST_FOREACH(Tree &t, trees) {
-            t.reset(param, engine, this, depth);
+            t.reset(param, engine, depth);
         }
     }
 
-    void insert (Key key)
+    /// Insert a point to the forest.
+    /**
+      * @param key The key to be inserted.
+      * @param acc The accessor to retrieve the data corresponding to keys.
+      *
+      * We might need to rebalance the trees, so an accessor is
+      * needed to retrieve data points.
+      */
+    template <typename ACCESSOR>
+    void insert (Key key, ACCESSOR &acc)
     {
         BOOST_FOREACH(Tree &t, trees) {
-            t.insert(key);
+            t.insert(key, acc);
         }
     }
 
     /// Query for K-NNs.
     /**
       * @param val the query object.
-      * @param topk the returned values.  Should be initialized to the required
-      * size.
       * @param M lower bound of the total number of points to scan.
-      * @param pcnt if not 0, the number of scanned items will be stored in it.
+      * @param scanner the functional object to passed keys to.
       */
-    void query (Domain val, Topk<Key> *topk, unsigned M, unsigned *cnt = 0)
+    template <typename SCANNER>
+    void query (Domain val, unsigned M, SCANNER &scanner)
     {
         std::vector<std::vector<const typename Tree::Node *> > list(trees.size());
         for (unsigned i = 0; i < trees.size(); ++i) {
@@ -256,14 +255,11 @@ public:
         if (d > 0) --d;
 
         // recursively scan the nodes
-        accessor.reset();
-        unsigned c = 0;
         for (unsigned i = 0; i < list.size(); ++i) {
             if (d < list[i].size()) {
-                c += list[i][d]->scan(&trees[i], val, topk);
+                list[i][d]->scan(&trees[i], val, scanner);
             }
         }
-        if (cnt != 0) *cnt = c;
     }
 };
 

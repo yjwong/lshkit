@@ -37,8 +37,11 @@ namespace lshkit {
 /** Flat LSH index is implemented as L hash tables using mutually independent
   * LSH functions.  Given a query point q, the points in the bins to which q is
   * hashed to are scanned for the nearest neighbors of q.
+  *
+  * @param LSH The LSH class.
+  * @param KEY The key type.
   */
-template <typename LSH, typename ACCESSOR, typename METRIC>
+template <typename LSH, typename KEY>
 class LshIndex
 {
 
@@ -46,33 +49,17 @@ class LshIndex
 public:
     typedef typename LSH::Parameter Parameter;
     typedef typename LSH::Domain Domain;
-    typedef typename ACCESSOR::Key Key;
+    typedef KEY Key;
 
 protected:
     typedef std::vector<Key> Bin;
 
     std::vector<LSH> lshs_;
     std::vector<std::vector<Bin> > tables_;
-    ACCESSOR accessor_;
-    METRIC metric_;
 
 public:
     /// Constructor.
-    /**
-      * @param accessor object accessor.
-      * @param metric distance metric.
-      *
-      * (ACCESSOR)accessor is used as a function.  Given a key, accessor(key)
-      * returns an object (or reference) of the type LSH::Domain. That object is
-      * used to calculate a hash value.  The key is saved in the hash table.
-      * When the associated object is needed, e.g. when scanning a bin,
-      * accessor(key) is called to access the object.
-      *
-      * Metric metric is also used as a function.  It accepts two parameters of
-      * the type LSH::Domain and returns the distance between the two.
-      */
-    LshIndex(ACCESSOR &accessor, const METRIC metric)
-        : accessor_(accessor), metric_(metric) {
+    LshIndex() {
     }
 
     /// Initialize the hash tables.
@@ -90,8 +77,7 @@ public:
         lshs_.resize(L);
         tables_.resize(L);
 
-        for (unsigned i = 0; i < L; ++i)
-        {
+        for (unsigned i = 0; i < L; ++i) {
             lshs_[i].reset(param, engine);
             if (lshs_[i].getRange() == 0) {
                 throw std::logic_error("LSH with unlimited range should not be used to construct an LSH index.  Use lshkit::Tail<> to wrapp the LSH.");
@@ -158,11 +144,10 @@ public:
       * The inserted object is not explicitly given, but is obtained by
       * accessor(key).
       */
-    void insert (Key key)
+    void insert (Key key, Domain value)
     {
-        for (unsigned i = 0; i < lshs_.size(); ++i)
-        {
-            unsigned index = lshs_[i](accessor_(key));
+        for (unsigned i = 0; i < lshs_.size(); ++i) {
+            unsigned index = lshs_[i](value);
             tables_[i][index].push_back(key);
         }
     }
@@ -170,29 +155,21 @@ public:
     /// Query for K-NNs.
     /**
       * @param obj the query object.
-      * @param topk the returned values.  Should be initialized to the required
-      * size.
-      * @param pcnt if not 0, the number of scanned items will be stored in it.
+      * @param scanner the scanner object.
+      *
+      * The scanner is an invokable object.  LSH index will pass every candidate key
+      * to scanner by invoking scanner(key).
       */
-    void query (const Domain &obj, Topk<Key> *topk, unsigned *pcnt = (unsigned *)0)
+    template <typename SCANNER>
+    void query (Domain obj, SCANNER &scanner) const
     {
-//        if (L == 0) L = lshs_.size();
- //       assert(L <= lshs_.size());
-        accessor_.reset();
-        unsigned L = lshs_.size();
-        unsigned cnt = 0;
-        for (unsigned i = 0; i < L; ++i)
-        {
+        for (unsigned i = 0; i < lshs_.size(); ++i) {
             unsigned index = lshs_[i](obj);
             Bin &bin = tables_[i][index];
-            for (typename Bin::const_iterator it = bin.begin();
-                    it != bin.end(); ++it)
-            {
-                ++cnt;
-                (*topk) << typename Topk<Key>::Element(*it, metric_(obj, accessor_(*it)));
+            BOOST_FOREACH(Key key, bin) {
+                scanner(*it);
             }
         }
-        if (pcnt != 0) *pcnt = cnt;
     }
 };
 
