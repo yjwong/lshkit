@@ -127,11 +127,11 @@ private:
             }
 
             template <typename SCANNER>
-            void scan (Tree *tree, Domain val, SCANNER &scanner) const {
+            void scan (Domain val, SCANNER &scanner) const {
                 if (!children.empty()) {
                     BOOST_FOREACH(const Node *n, children) {
                         if (n != 0) {
-                            n->scan(tree, val, scanner);
+                            n->scan(val, scanner);
                         }
                     }
                 }
@@ -233,7 +233,7 @@ public:
       * @param scanner the functional object to passed keys to.
       */
     template <typename SCANNER>
-    void query (Domain val, unsigned M, SCANNER &scanner)
+    void query (Domain val, unsigned M, SCANNER &scanner) const
     {
         std::vector<std::vector<const typename Tree::Node *> > list(trees.size());
         for (unsigned i = 0; i < trees.size(); ++i) {
@@ -257,7 +257,7 @@ public:
         // recursively scan the nodes
         for (unsigned i = 0; i < list.size(); ++i) {
             if (d < list[i].size()) {
-                list[i][d]->scan(&trees[i], val, scanner);
+                list[i][d]->scan(val, scanner);
             }
         }
     }

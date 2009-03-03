@@ -140,6 +140,7 @@ public:
     /// Insert an item to the index.
     /**
       * @param key the key to the item.
+      * @param value the value of the key.
       *
       * The inserted object is not explicitly given, but is obtained by
       * accessor(key).
@@ -165,9 +166,8 @@ public:
     {
         for (unsigned i = 0; i < lshs_.size(); ++i) {
             unsigned index = lshs_[i](obj);
-            Bin &bin = tables_[i][index];
-            BOOST_FOREACH(Key key, bin) {
-                scanner(*it);
+            BOOST_FOREACH(Key key, tables_[i][index]) {
+                scanner(key);
             }
         }
     }

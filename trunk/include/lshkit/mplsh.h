@@ -29,45 +29,35 @@
   * 
   * Follow the following 4 steps to use the MPLSH API.
   * 
-  * \section mplsh-1 1. Implement an Accessor class which maps from keys to feature vectors.
+  * \section mplsh-1 1. Implement a scanner class which scan the candidate keys.
   * 
   * The MPLSH data structure doesn't manage the feature vectors, but only keeps
-  * the keys to retrieve them.  You need to provide an Accessor class to MPLSH
-  * so that it can retrieve the corresponding feature vector of a key.
+  * the keys to retrieve them.  You need to provide a scanner class to MPLSH, and
+  * for each query, MPLSH will pass the candidate keys to the scanner.
+  * The scanner usually keeps an K-NN data structure internally and updates
+  * it when receives candidate keys.
   *
-  * If you use lshkit::Matrix<> to manage the feature vectors, then simply use
-  * lshkit::Matrix<>::Accessor.
+  * MPLSH uses the scanner as a unary function taking a key as argument.
+  *
+  * The default scanner implementation is TopkScanner.
   * 
   * \code
-  * class Accessor
+  * class Scanner
   * {
-  *      // The key type for MPLSH to use.  Key should be copyable.
-  *      typedef ... Key; 
-  *
-  *      //Mark that key has been accessed.  If key has already been marked, return false,
-  *      //otherwise return true.  MPLSH will use this to avoid scanning the data more than
-  *      //one time per query.
-  *      bool mark (unsigned key);
-  *
-  *      //To clear all the marks.  Reset() is invoked when every query begins.
-  *      void reset (); 
-  *   
-  *      //Given a key, operator () return the pointer to a feature vector.
-  *      const float *operator () (unsigned key)
+  *      ...
+  *      void operator () (unsigned key);
   * };
   * \endcode
   *
   * \section mplsh-2 2. Construct the MPLSH data structure.
   *
-  * Assume we have the class ACCESSOR defined.
+  * Assume we use key type KEY.
   *
   * \code
   *
-  * typedef MultiProbeLshIndex<ACCESSOR> Index;
+  * typedef MultiProbeLshIndex<KEY> Index;
   *
-  * ACCESSOR accessor (...);  //you need to define and construct the ACCESSOR cluster yourself.
-  *
-  * Index index(accessor);
+  * Index index;
   * \endcode
   *
   * The index can not be used yet.
@@ -87,8 +77,8 @@
   * 
   * index.init(param, rng, L);
   * 
-  * for (each possible key) {
-  *     index.insert(key);
+  * for (each possible key, value pair) {
+  *     index.insert(key, value);
   * }
   * 
   * // You can now save the index for future use.
@@ -104,18 +94,12 @@
   * \endcode
   * 
   * \section mplsh-4 4. Query the MPLSH. 
-  * The K-NNs are stored in the Topk<> class.  Topk<Key> is a vector of <key,
-  * distance> pairs and the the MPLSH index will have the vector sorted in
-  * ascending order of distance.
-  *  
+  * 
   * \code
   *   
-  * Topk<ACCESSOR::Key> topk;
   * float *query;
-  * unsigned cnt;
   * ...
-  * topk.reset(K);
-  * index.query(query, &topk, T, &cnt);   cnt is the number of points actually scanned.
+  * index.query(query, T, scanner);   cnt is the number of points actually scanned.
   * 
   * \endcode
   *
@@ -265,16 +249,16 @@ public:
         ar & H_;
     }
 
-    void genProbeSequence (Domain obj, std::vector<unsigned> &seq, unsigned T);
+    void genProbeSequence (Domain obj, std::vector<unsigned> &seq, unsigned T) const;
 };
 
 
 /// Multi-Probe LSH index.
-template <typename ACCESSOR>
-class MultiProbeLshIndex: public LshIndex<MultiProbeLsh, ACCESSOR, metric::l2<float> >
+template <typename KEY>
+class MultiProbeLshIndex: public LshIndex<MultiProbeLsh, KEY>
 {
 public:
-    typedef LshIndex<MultiProbeLsh, ACCESSOR, metric::l2<float> > Super;
+    typedef LshIndex<MultiProbeLsh, KEY> Super;
     /**
      * Super::Parameter is the same as MultiProbeLsh::Parameter
      */
@@ -287,11 +271,10 @@ private:
 
 public: 
     typedef typename Super::Domain Domain;
-    typedef typename Super::Key Key;
+    typedef KEY Key;
 
     /// Constructor.
-    MultiProbeLshIndex(ACCESSOR &accessor)
-        : Super(accessor, metric::l2<float>(0) /* placeholder*/) {
+    MultiProbeLshIndex() {
     } 
 
     /// Initialize MPLSH.
@@ -306,7 +289,6 @@ public:
     void init (const Parameter &param, Engine &engine, unsigned L) {
         Super::init(param, engine, L);
         param_ = param;
-        Super::metric_ = metric::l2<float>(param.dim);
         // we are going to normalize the distance by window size, so here we pass W = 1.0.
         // We tune adaptive probing for KNN distance range [0.0001W, 20W].
         recall_.reset(MultiProbeLshModel(Super::lshs_.size(), 1.0, param_.repeat, Probe::MAX_T), 200, 0.0001, 20.0);
@@ -317,7 +299,6 @@ public:
     {
         Super::load(ar);
         param_.serialize(ar, 0);
-        Super::metric_ = metric::l2<float>(param_.dim);
         recall_.load(ar);
         verify(ar);
     }
@@ -334,71 +315,53 @@ public:
     /// Query for K-NNs.
     /**
       * @param obj the query object.
-      * @param topk the returned values.  Should be initialized to the required
-      * size.
-      * @param pcnt if not 0, the number of scanned items will be stored in it.
+      * @param scanner 
       */
-    void query (const Domain &obj, Topk<Key> *topk, unsigned T, unsigned *pcnt = (unsigned *)0)
+    template <typename SCANNER>
+    void query (Domain obj, unsigned T, SCANNER &scanner)
     {
         std::vector<unsigned> seq;
-        unsigned L = Super::lshs_.size();
-        unsigned cnt = 0;
-        Super::accessor_.reset();
-        for (unsigned i = 0; i < L; ++i)
-        {
+        for (unsigned i = 0; i < Super::lshs_.size(); ++i) {
             Super::lshs_[i].genProbeSequence(obj, seq, T);
-            for (unsigned j = 0; j < seq.size(); ++j)
-            {
+            for (unsigned j = 0; j < seq.size(); ++j) {
                 typename Super::Bin &bin = Super::tables_[i][seq[j]];
-                for (typename Super::Bin::const_iterator it = bin.begin();
-                    it != bin.end(); ++it)
-                    if (Super::accessor_.mark(*it))
-                    {
-                        ++cnt;
-                        (*topk) << typename Topk<Key>::Element(*it, Super::metric_(obj,
-                                    Super::accessor_(*it)));
-                    }
+                BOOST_FOREACH(Key key, bin) {
+                    scanner(key);
+                }
             }
         }
-        if (pcnt != 0) *pcnt = cnt;
     }
 
     /// Query for K-NNs, try to achieve the given recall by adaptive probing.
-    void query (const Domain &obj, Topk<Key> *topk, float recall, unsigned *pcnt = (unsigned *)0)
+    /**
+      * There's a special requirement for the scanner type used in adaptive query.
+      * It should support the following method to return the current K-NNs:
+      *
+      * const Topk<KEY> &topk () const;
+      */
+    template <typename SCANNER>
+    void query_recall (Domain obj, float recall, SCANNER &scanner) const
     {
-        if (topk->getK() == 0) throw std::logic_error("CANNOT ACCEPT R-NN QUERY");
-        if (topk->getK() != topk->size()) throw std::logic_error("TOPK SIZE != K");
+        if (scanner.topk().getK() == 0) throw std::logic_error("CANNOT ACCEPT R-NN QUERY");
         unsigned L = Super::lshs_.size();
         std::vector<std::vector<unsigned> > seqs(L);
         for (unsigned i = 0; i < L; ++i) Super::lshs_[i].genProbeSequence(obj,
                 seqs[i], Probe::MAX_T);
 
-        unsigned cnt = 0;
-        Super::accessor_.reset();
-        for (unsigned j = 0; j < Probe::MAX_T; ++j)
-        {
+        for (unsigned j = 0; j < Probe::MAX_T; ++j) {
             if (j >= seqs[0].size()) break;
-            for (unsigned i = 0; i < L; ++i)
-            {
-                typename Super::Bin &bin = Super::tables_[i][seqs[i][j]];
-                for (typename Super::Bin::const_iterator it = bin.begin();
-                    it != bin.end(); ++it)
-                    if (Super::accessor_.mark(*it))
-                    {
-                        ++cnt;
-                        (*topk) << typename Topk<Key>::Element(*it, Super::metric_(obj,
-                                    Super::accessor_(*it)));
-                    }
+            for (unsigned i = 0; i < L; ++i) {
+                BOOST_FOREACH(Key key, Super::tables_[i][seqs[i][j]]) {
+                    scanner(key);
+                }
             }
             float r = 0.0;
-            for (unsigned i = 0; i < topk->size(); ++i)
-            {
-                r += recall_.lookup(topk->at(i).dist / param_.W, j + 1);
+            for (unsigned i = 0; i < scanner.topk().size(); ++i) {
+                r += recall_.lookup(scanner.topk()[i].dist / param_.W, j + 1);
             }
-            r /= topk->size();
+            r /= scanner.topk().size();
             if (r >= recall) break;
         }
-        if (pcnt != 0) *pcnt = cnt;
     }
 };
 

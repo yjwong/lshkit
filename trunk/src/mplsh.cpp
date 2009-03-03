@@ -87,7 +87,7 @@ namespace lshkit
     }
 
     void MultiProbeLsh::genProbeSequence (Domain obj, std::vector<unsigned>
-            &seq, unsigned T)
+            &seq, unsigned T) const
     {
         ProbeSequence scores;
         std::vector<unsigned> base;

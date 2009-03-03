@@ -210,7 +210,7 @@ public:
         }
     }
     
-    float lookup (float dist, int T)
+    float lookup (float dist, int T) const
     {
         unsigned d;
         if (dist < min_) return 1.0;

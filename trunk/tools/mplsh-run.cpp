@@ -179,10 +179,10 @@ int main (int argc, char *argv[])
     FloatMatrix data(data_file);
     cout << boost::format("LOAD TIME: %1%s.") % timer.elapsed() << endl;
 
-    typedef MultiProbeLshIndex<FloatMatrix::Accessor> Index;
+    typedef MultiProbeLshIndex<unsigned> Index;
 
     FloatMatrix::Accessor accessor(data);
-    Index index(accessor);
+    Index index;
 
     // try loading index
     bool index_loaded = false;
@@ -225,7 +225,7 @@ int main (int argc, char *argv[])
                 // Insert an item to the hash table.
                 // Note that only the key is passed in here.
                 // MPLSH will get the feature from the accessor.
-                index.insert(i);
+                index.insert(i, data[i]);
                 ++progress;
             }
         }
@@ -263,7 +263,8 @@ int main (int argc, char *argv[])
 
         Stat recall;
         Stat cost;
-        Topk<unsigned> topk;
+        metric::l2sqr<float> l2sqr(data.getDim());
+        TopkScanner<FloatMatrix::Accessor, metric::l2sqr<float> > query(accessor, l2sqr, K, R);
 
         timer.restart();
         if (do_recall)
@@ -273,12 +274,11 @@ int main (int argc, char *argv[])
             boost::progress_display progress(Q);
             for (unsigned i = 0; i < Q; ++i)
             {
-                unsigned cnt;
                 // Query for one point.
-                topk.reset(K, R);
-                index.query(data[bench.getQuery(i)], &topk, desired_recall, &cnt);
-                recall << bench.getAnswer(i).recall(topk);
-                cost << double(cnt)/double(data.getSize());
+                query.reset(data[bench.getQuery(i)]);
+                index.query_recall(data[bench.getQuery(i)], desired_recall, query);
+                recall << bench.getAnswer(i).recall(query.topk());
+                cost << double(query.cnt())/double(data.getSize());
                 ++progress;
             }
         }
@@ -288,11 +288,10 @@ int main (int argc, char *argv[])
             boost::progress_display progress(Q);
             for (unsigned i = 0; i < Q; ++i)
             {
-                unsigned cnt;
-                topk.reset(K, R);
-                index.query(data[bench.getQuery(i)], &topk, T, &cnt);
-                recall << bench.getAnswer(i).recall(topk);
-                cost << double(cnt)/double(data.getSize());
+                query.reset(data[bench.getQuery(i)]);
+                index.query(data[bench.getQuery(i)], T, query);
+                recall << bench.getAnswer(i).recall(query.topk());
+                cost << double(query.cnt())/double(data.getSize());
                 ++progress;
             }
         }

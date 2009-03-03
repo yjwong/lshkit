@@ -147,6 +147,8 @@ public:
         boost::dynamic_bitset<> flags_;
     public:
         typedef unsigned Key;
+        typedef const float *Value;
+
         Accessor(const Matrix &matrix)
             : matrix_(matrix), flags_(matrix.getSize()) {}
 

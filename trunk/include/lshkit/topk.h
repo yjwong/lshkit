@@ -191,6 +191,79 @@ public:
     }
 };
 
+/// Top-K scanner.
+/**
+  * Scans keys for top-K query.  This is the object passed into the LSH query interface.
+  */
+template <typename ACCESSOR, typename METRIC>
+class TopkScanner {
+public:
+    /// Key type.
+    typedef typename ACCESSOR::Key Key;
+    /// Value type.
+    typedef typename ACCESSOR::Value Value;
+
+    /// Constructor.
+    /**
+      * @param accessor The scanner use accessor to retrieva values from keys.
+      * @param metric The distance metric.
+      * @param K value used to reset internal Topk class.
+      * @param R value used to reset internal Topk class.
+      *
+      * (ACCESSOR)accessor is used as a function.  Given a key, accessor(key)
+      * returns an object (or reference) of the type LSH::Domain. That object is
+      * used to calculate a hash value.  The key is saved in the hash table.
+      * When the associated object is needed, e.g. when scanning a bin,
+      * accessor(key) is called to access the object.
+      *
+      * Metric metric is also used as a function.  It accepts two parameters of
+      * the type LSH::Domain and returns the distance between the two.
+      */
+    TopkScanner(const ACCESSOR &accessor, const METRIC &metric, unsigned K, float R = std::numeric_limits<float>::max())
+        : accessor_(accessor), metric_(metric), K_(K), R_(R) {
+    }
+
+    /// Reset the query.
+    /**
+      * This function should be invoked before each query.
+      */
+    void reset (Value query) {
+        query_ = query;
+        accessor_.reset();
+        topk_.reset(K_, R_);
+        cnt_ = 0;
+    }
+
+    /// Number of points scanned for the current query.
+    unsigned cnt () const {
+        return cnt_;
+    }
+
+    /// TopK results.
+    const Topk<Key> &topk () const {
+        return topk_;
+    }
+
+    /// Update the current query by scanning key.
+    /**
+      * This is normally invoked by the LSH index structure.
+      */
+    void operator () (Key key) {
+        if (accessor_.mark(key)) {
+            ++cnt_;
+            topk_ << typename Topk<Key>::Element(key, metric_(query_, accessor_(key)));
+        }
+    }
+private:
+    ACCESSOR accessor_;
+    METRIC metric_;
+    unsigned K_;
+    float R_;
+    Topk<Key> topk_;
+    Value query_;
+    unsigned cnt_;
+};
+
 }
 
 #endif

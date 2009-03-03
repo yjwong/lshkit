@@ -113,11 +113,11 @@ int main (int argc, char *argv[])
     //typedef Tail<RepeatHash<CauchyLsh> > MyLsh;
 
     typedef Tail<RepeatHash<ThresholdingLsh> > MyLsh;
-    typedef LshIndex<MyLsh, FloatMatrix::Accessor, metric::l1<float> > Index;
+    typedef LshIndex<MyLsh, unsigned> Index;
 
     metric::l1<float> l1(data.getDim());
     FloatMatrix::Accessor accessor(data);
-    Index index(accessor, l1);
+    Index index;
 
     bool index_loaded = false;
 
@@ -170,7 +170,7 @@ int main (int argc, char *argv[])
                 // Insert an item to the hash table.
                 // Note that only the key is passed in here.
                 // MPLSH will get the feature from the accessor.
-                index.insert(i);
+                index.insert(i, data[i]);
                 ++progress;
             }
         }
@@ -209,18 +209,17 @@ int main (int argc, char *argv[])
 
         Stat recall;
         Stat cost;
-        Topk<unsigned> topk;
 
         timer.restart();
         {
+            TopkScanner<FloatMatrix::Accessor, metric::l1<float> > query(accessor, l1, K, R);
             boost::progress_display progress(Q);
             for (unsigned i = 0; i < Q; ++i)
             {
-                unsigned cnt;
-                topk.reset(K, R);
-                index.query(data[bench.getQuery(i)], &topk, &cnt);
-                recall << bench.getAnswer(i).recall(topk);
-                cost << double(cnt)/double(data.getSize());
+                query.reset(data[bench.getQuery(i)]);
+                index.query(data[bench.getQuery(i)], query);
+                recall << bench.getAnswer(i).recall(query.topk());
+                cost << double(query.cnt())/double(data.getSize());
                 ++progress;
             }
         }
