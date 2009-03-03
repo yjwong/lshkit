@@ -263,8 +263,8 @@ int main (int argc, char *argv[])
 
         Stat recall;
         Stat cost;
-        metric::l2sqr<float> l2sqr(data.getDim());
-        TopkScanner<FloatMatrix::Accessor, metric::l2sqr<float> > query(accessor, l2sqr, K, R);
+        metric::l2<float> l2(data.getDim());
+        TopkScanner<FloatMatrix::Accessor, metric::l2<float> > query(accessor, l2, K, R);
 
         timer.restart();
         if (do_recall)

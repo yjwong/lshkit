@@ -12,6 +12,8 @@ objects.
 This will further improve the query speed when LSH return a large number of candidates.  An example
 will be provided shortly.
 
+I'll release version 0.2 when MPLSH batch query with cache-aware scheduling is finished.
+
 lshkit 0.1.9 - 2009-03-02
 
 * Improved the MPLSH modeling algorithm to make it work with feature vectors with large absolute values.

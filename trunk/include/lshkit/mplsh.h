@@ -342,11 +342,14 @@ public:
     template <typename SCANNER>
     void query_recall (Domain obj, float recall, SCANNER &scanner) const
     {
-        if (scanner.topk().getK() == 0) throw std::logic_error("CANNOT ACCEPT R-NN QUERY");
+        unsigned K = scanner.topk().getK();
+        if (K == 0) throw std::logic_error("CANNOT ACCEPT R-NN QUERY");
+        if (scanner.topk().size() < K) throw std::logic_error("ERROR");
         unsigned L = Super::lshs_.size();
         std::vector<std::vector<unsigned> > seqs(L);
-        for (unsigned i = 0; i < L; ++i) Super::lshs_[i].genProbeSequence(obj,
-                seqs[i], Probe::MAX_T);
+        for (unsigned i = 0; i < L; ++i) {
+            Super::lshs_[i].genProbeSequence(obj, seqs[i], Probe::MAX_T);
+        }
 
         for (unsigned j = 0; j < Probe::MAX_T; ++j) {
             if (j >= seqs[0].size()) break;
@@ -356,10 +359,10 @@ public:
                 }
             }
             float r = 0.0;
-            for (unsigned i = 0; i < scanner.topk().size(); ++i) {
+            for (unsigned i = 0; i < K; ++i) {
                 r += recall_.lookup(scanner.topk()[i].dist / param_.W, j + 1);
             }
-            r /= scanner.topk().size();
+            r /= K;
             if (r >= recall) break;
         }
     }
