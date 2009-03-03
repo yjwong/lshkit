@@ -1,4 +1,4 @@
-lshkit snapshot last updated 2009-02-23
+lshkit 0.1.9 - 2009-03-02
 
 * Improved the MPLSH modeling algorithm to make it work with feature vectors with large absolute values.
 * Added a preliminary LSH Forest implementation with an example program tools/forest-run.cpp.
@@ -6,6 +6,8 @@ lshkit snapshot last updated 2009-02-23
 * Added R-NN (range query) support to Topk.  
 * Added R-NN support in tools/scan.cpp, tools/mplsh-run.cpp, tools/lsh-run.cpp, tools/sketch-run.cpp.  Set K = 0 for R-NN.
 * Added tools/txt2bin.cpp to convert text data file to binary.
+
+The current index implementation is not thread-safe.  I'm going to change the index API in next version (0.2).  This is a major change.  This is the last release with the old index API.
 
 lshkit 0.1.2 - 2009-02-15
 
