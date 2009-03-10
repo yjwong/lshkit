@@ -55,7 +55,6 @@ class Matrix
 {
     int dim, N;
     T *dims;
-    T **vecs;
 
     void load (const char *);
     void save (const char *);
@@ -74,42 +73,34 @@ public:
         dim = _dim;
         N = _N;
         if (dims != NULL) delete[] dims;
-        if (vecs != NULL) delete[] vecs;
         dims = new T[dim * N];
-        vecs = new T*[N];
-        for (int i = 0; i < N; i++) {
-            vecs[i] = dims + i * dim;
-        }
     }
 
     /// Release memory.
     void free (void) {
         dim = N = 0;
         if (dims != NULL) delete[] dims;
-        if (vecs != NULL) delete[] dims;
         dims = NULL;
-        vecs = NULL;
     }
     
     /// Default constructor.
     /** Allocates an empty matrix.  Should invoke reset or load before using it.*/
-    Matrix () :dim(0), N(0), dims(NULL), vecs(NULL) {}
+    Matrix () :dim(0), N(0), dims(NULL) {}
 
     /// Constructor, same as Matrix() followed immediately by reset().
-    Matrix (int _dim, int _N) : dims(NULL), vecs(NULL) { reset(_dim, _N); }
+    Matrix (int _dim, int _N) : dims(NULL) { reset(_dim, _N); }
 
     /// Destructor.
-    ~Matrix () { if (dims != NULL) delete[] dims; if (vecs != NULL) delete[] vecs; }
+    ~Matrix () { if (dims != NULL) delete[] dims; }
 
     /// Access the ith vector.
-    const T *operator [] (int i) const { return vecs[i]; }
+    const T *operator [] (int i) const {
+        return dims + i * dim;
+    }
 
     /// Access the ith vector.
-    T *operator [] (int i) { return vecs[i]; }
-
-    /// Get the list of vectors (be careful!).
-    T **const getVecs () const {
-        return vecs;
+    T *operator [] (int i) {
+        return dims + i * dim;
     }
 
     int getDim () const {return dim; }
@@ -138,7 +129,7 @@ public:
 #endif
 
     /// Construct from a file.
-    Matrix (const std::string &path): dims(NULL),vecs(NULL) { load(path); }
+    Matrix (const std::string &path): dims(NULL) { load(path); }
 
     /// An accessor class to be used with LSH index.
     class Accessor

@@ -101,7 +101,6 @@ template <class T>
 void Matrix<T>::map (const std::string &path) {
 
     if (dims != NULL) delete[] dims;
-    if (vecs != NULL) delete[] vecs;
 
     int size = 0;
 
@@ -120,11 +119,6 @@ void Matrix<T>::map (const std::string &path) {
     if (start == MAP_FAILED) { verify(0); }
     dims = (T *)(start + 3 * 4);
 
-    vecs = new T *[N];
-    
-    for (int i = 0; i < N; i++) {
-        vecs[i] = dims + i * dim;
-    }
 }
 
 template <class T>
@@ -132,10 +126,8 @@ void Matrix<T>::unmap () {
     char *start = (char *)dims - 3 * 4;
     if (munmap(start, sizeof(T) * size_t(dim) * size_t(N)) != 0) verify(0);
     close(fd);
-    delete[] vecs;
 
     dims = 0;
-    vecs = 0;
     dim = 0;
     N = 0;
 }
