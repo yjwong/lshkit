@@ -158,7 +158,7 @@ struct Probe
     {
         return (mask & m.mask) != 0;
     }
-    static const unsigned MAX_M = 20;
+    static const unsigned MAX_M = 31;
     static const unsigned MAX_T = 200;
 }; 
 
@@ -360,7 +360,7 @@ public:
             }
             float r = 0.0;
             for (unsigned i = 0; i < K; ++i) {
-                r += recall_.lookup(scanner.topk()[i].dist / param_.W, j + 1);
+                r += recall_.lookup(std::sqrt(scanner.topk()[i].dist) / param_.W, j + 1);
             }
             r /= K;
             if (r >= recall) break;

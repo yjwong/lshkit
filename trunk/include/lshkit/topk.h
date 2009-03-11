@@ -29,6 +29,7 @@
 #include <limits>
 #include <algorithm>
 #include <fstream>
+#include <lshkit/metric.h>
 
 /**
  * \file topk.h
@@ -244,6 +245,11 @@ public:
         return topk_;
     }
 
+    /// TopK results.
+    Topk<Key> &topk () {
+        return topk_;
+    }
+
     /// Update the current query by scanning key.
     /**
       * This is normally invoked by the LSH index structure.
@@ -263,6 +269,101 @@ private:
     Value query_;
     unsigned cnt_;
 };
+
+/**
+  * Specialized for l2sqr.
+  */
+template <typename ACCESSOR>
+class TopkScanner <ACCESSOR, metric::l2sqr<float> >{
+public:
+    typedef typename ACCESSOR::Key Key;
+    typedef const float *Value;
+
+    TopkScanner(const ACCESSOR &accessor, const metric::l2sqr<float> &metric, unsigned K, float R = std::numeric_limits<float>::max())
+        : accessor_(accessor), dim_(metric.dim()), K_(K), R_(R) {
+    }
+
+    void reset (const float *query) {
+        query_ = query;
+        accessor_.reset();
+        topk_.reset(K_, R_);
+        cnt_ = 0;
+    }
+
+    unsigned cnt () const {
+        return cnt_;
+    }
+
+    const Topk<Key> &topk () const {
+        return topk_;
+    }
+
+    Topk<Key> &topk () {
+        return topk_;
+    }
+
+    void operator () (unsigned key) {
+        if (accessor_.mark(key)) {
+            ++cnt_;
+            unsigned d = dim_ & ~unsigned(7);
+            const float *aa = query_, *end_a = aa + d;
+            const float *bb = accessor_(key), *end_b = bb + d;
+#ifdef __GNUC__
+            __builtin_prefetch(aa, 0, 3);
+            __builtin_prefetch(bb, 0, 0);
+#endif
+            double th = topk_.threshold();
+            float r = 0.0;
+            float r0, r1, r2, r3, r4, r5, r6, r7;
+
+            const float *a = end_a, *b = end_b;
+
+            r0 = r1 = r2 = r3 = r4 = r5 = r6 = r7 = 0.0;
+
+            switch (dim_ & 7) {
+                case 7: r6 = sqr(a[6] - b[6]);
+                case 6: r5 = sqr(a[5] - b[5]);
+                case 5: r4 = sqr(a[4] - b[4]);
+                case 4: r3 = sqr(a[3] - b[3]);
+                case 3: r2 = sqr(a[2] - b[2]);
+                case 2: r1 = sqr(a[1] - b[1]);
+                case 1: r0 = sqr(a[0] - b[0]);
+            }
+
+            a = aa; b = bb;
+
+            for (; a < end_a; a += 8, b += 8) {
+#ifdef __GNUC__
+                __builtin_prefetch(a + 32, 0, 3);
+                __builtin_prefetch(b + 32, 0, 0);
+#endif
+                r += r0 + r1 + r2 + r3 + r4 + r5 + r6 + r7;
+                if (r > th) return;
+                r0 = sqr(a[0] - b[0]);
+                r1 = sqr(a[1] - b[1]);
+                r2 = sqr(a[2] - b[2]);
+                r3 = sqr(a[3] - b[3]);
+                r4 = sqr(a[4] - b[4]);
+                r5 = sqr(a[5] - b[5]);
+                r6 = sqr(a[6] - b[6]);
+                r7 = sqr(a[7] - b[7]);
+            }
+
+            r += r0 + r1 + r2 + r3 + r4 + r5 + r6 + r7;
+            topk_ << typename Topk<Key>::Element(key, r);
+        }
+    }
+
+private:
+    ACCESSOR accessor_;
+    unsigned dim_;
+    unsigned K_;
+    float R_;
+    Topk<Key> topk_;
+    const float* query_;
+    unsigned cnt_;
+};
+
 
 }
 

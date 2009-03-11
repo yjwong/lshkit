@@ -263,8 +263,9 @@ int main (int argc, char *argv[])
 
         Stat recall;
         Stat cost;
-        metric::l2<float> l2(data.getDim());
-        TopkScanner<FloatMatrix::Accessor, metric::l2<float> > query(accessor, l2, K, R);
+        metric::l2sqr<float> l2sqr(data.getDim());
+        TopkScanner<FloatMatrix::Accessor, metric::l2sqr<float> > query(accessor, l2sqr, K, R);
+        vector<Topk<unsigned> > topks(Q);
 
         timer.restart();
         if (do_recall)
@@ -277,8 +278,8 @@ int main (int argc, char *argv[])
                 // Query for one point.
                 query.reset(data[bench.getQuery(i)]);
                 index.query_recall(data[bench.getQuery(i)], desired_recall, query);
-                recall << bench.getAnswer(i).recall(query.topk());
                 cost << double(query.cnt())/double(data.getSize());
+                topks[i].swap(query.topk());
                 ++progress;
             }
         }
@@ -290,11 +291,16 @@ int main (int argc, char *argv[])
             {
                 query.reset(data[bench.getQuery(i)]);
                 index.query(data[bench.getQuery(i)], T, query);
-                recall << bench.getAnswer(i).recall(query.topk());
                 cost << double(query.cnt())/double(data.getSize());
+                topks[i].swap(query.topk());
                 ++progress;
             }
         }
+
+        for (unsigned i = 0; i < Q; ++i) {
+            recall << bench.getAnswer(i).recall(topks[i]);
+        }
+
         cout << boost::format("QUERY TIME: %1%s.") % timer.elapsed() << endl;
 
         cout << "[RECALL] " << recall.getAvg() << " +/- " << recall.getStd() << endl;

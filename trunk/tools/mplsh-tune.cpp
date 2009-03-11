@@ -146,10 +146,10 @@ static const int MIN_L = 1;
 static const int MAX_L = 20;
 
 static const int MIN_T = 1;
-static const int MAX_T = 100;
+static const int MAX_T = Probe::MAX_T;
 
 static const int MIN_M = 1;
-static const int MAX_M = 20;
+static const int MAX_M = Probe::MAX_M;
 
 static const double MIN_W = 0.01;
 static const double MAX_W = 10;
