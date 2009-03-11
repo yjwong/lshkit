@@ -78,6 +78,9 @@ class l2sqr : public std::binary_function<const T*, const T*, float>
     unsigned dim_;
 public:
     l2sqr (unsigned dim) : dim_(dim) {}
+    unsigned dim() const {
+        return dim_;
+    }
     float operator () (const T *first1, const T *first2) const
     {
         float r = 0.0;
