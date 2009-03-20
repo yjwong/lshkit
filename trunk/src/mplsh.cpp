@@ -32,7 +32,7 @@ namespace lshkit
         for (unsigned l = 0; l < M; ++l)
         {
             unsigned r = 2 * M - l - 1;
-            seq[l].mask = seq[r].mask = seq[r].shift = 1 << l;
+            seq[l].mask = seq[r].mask = seq[r].shift = leftshift(l);
             seq[l].shift = 0;
             seq[l].reserve = seq[r].reserve = 0;
             float delta = (l + 1.0) / (M + 1.0) * 0.5;
@@ -118,9 +118,9 @@ namespace lshkit
             for (unsigned i = 0; i < lsh_.size(); ++i)
             {
                 unsigned h = base[scores[i].mask];
-                if (probe.mask & (1 << i))
+                if (probe.mask & leftshift(i))
                 {
-                    if (probe.shift & (1 << i))
+                    if (probe.shift & leftshift(i))
                     {
                         h += scores[i].reserve;
                     }

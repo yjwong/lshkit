@@ -92,10 +92,10 @@ double MultiProbeLshModel::recall (double x) const
         for (unsigned j = 0; j < M_; j++)
         {
             Probe &probe = __probeSequenceTemplates[M_][i];
-            if (probe.mask & (1 << j))
+            if (probe.mask & leftshift(j))
             {
                 double delta = (j + 1.0) / (M_ + 1.0) * 0.5; // expected value
-                if (probe.shift & (1 << j))
+                if (probe.shift & leftshift(j))
                 {
                     r *= p_col_helper(x2, 1.0 - delta);
                 }

@@ -138,11 +138,15 @@
 namespace lshkit
 {
 
+static inline unsigned long long leftshift (unsigned N) {
+    return (unsigned long long)1 << N;
+}
+
 /// Probe vector.
 struct Probe
 {
-    unsigned mask;
-    unsigned shift;
+    unsigned long long mask;
+    unsigned long long shift;
     float score;
     unsigned reserve;
     bool operator < (const Probe &p) const { return score < p.score; }
@@ -158,7 +162,7 @@ struct Probe
     {
         return (mask & m.mask) != 0;
     }
-    static const unsigned MAX_M = 31;
+    static const unsigned MAX_M = 64;
     static const unsigned MAX_T = 200;
 }; 
 
