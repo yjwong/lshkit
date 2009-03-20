@@ -246,6 +246,15 @@ int main (int argc, char *argv[])
     MultiProbeLshDataModel local_model(param, N, K);
     model = &local_model;
 
+    
+    int begin_M = intervals[2].begin;
+    int end_M = intervals[2].end;
+
+    for (int m = begin_M; m < end_M; ++m) {
+
+        intervals[2].begin = m;
+        intervals[2].end = m + 1;
+
     tune::Range range(intervals, intervals + sizeof intervals /sizeof intervals[0]);
     tune::Input input;
     bool ok = tune::Tune(range, constraint, &input);
@@ -256,6 +265,8 @@ int main (int argc, char *argv[])
             % recall(input) % cost(input) << endl;
     } else {
         cout << "Failed." << endl;
+    }
+
     }
 
 
