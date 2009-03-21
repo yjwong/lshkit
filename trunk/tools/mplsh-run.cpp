@@ -139,8 +139,8 @@ int main (int argc, char *argv[])
         (",T", po::value<unsigned>(&T)->default_value(1), "# probes")
         (",L", po::value<unsigned>(&L)->default_value(1), "# hash tables")
         (",Q", po::value<unsigned>(&Q)->default_value(100), "# queries")
-        (",K", po::value<unsigned>(&K)->default_value(50), "# nearest neighbor to retrieve")
-        (",R", po::value<float>(&R)->default_value(numeric_limits<float>::max()), "R-NN distance range")
+        (",K", po::value<unsigned>(&K)->default_value(0), "# nearest neighbor to retrieve")
+        ("radius,R", po::value<float>(&R)->default_value(numeric_limits<float>::max()), "R-NN distance range (L2)")
         ("recall", po::value<float>(&desired_recall), "desired recall")
         ("data,D", po::value<string>(&data_file), "data file")
         ("benchmark,B", po::value<string>(&benchmark), "benchmark file")
@@ -156,6 +156,10 @@ int main (int argc, char *argv[])
     {
         cout << desc;
         return 0;
+    }
+
+    if (vm.count("radius") >= 1) {
+        R *= R; // we use L2sqr in the program.
     }
 
     if (vm.count("recall") >= 1)

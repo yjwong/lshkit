@@ -109,7 +109,7 @@ public:
 
     /// Reset the heap.
     void reset (unsigned k, float r = std::numeric_limits<float>::max()) {
-        if (k == 0) throw std::invalid_argument("K MUST BE POSITIVE");
+        // if (k == 0) throw std::invalid_argument("K MUST BE POSITIVE");
         R = th = r;
         K = k;
         this->resize(k);
@@ -117,7 +117,7 @@ public:
     }
 
     void reset (unsigned k, KEY key, float r = std::numeric_limits<float>::max()) {
-        if (k == 0) throw std::invalid_argument("K MUST BE POSITIVE");
+        // if (k == 0) throw std::invalid_argument("K MUST BE POSITIVE");
         R = th = r;
         K = k;
         this->resize(k); for (typename
@@ -173,6 +173,7 @@ public:
     float recall (const Topk<KEY> &topk /* to be evaluated */) const
     {
         unsigned matched = 0;
+        if (this->size() == 0) return 1.0;
         for (typename Base::const_iterator ii = this->begin(); ii != this->end(); ++ii)
         {
             for (typename Base::const_iterator jj = topk.begin(); jj != topk.end(); ++jj)
