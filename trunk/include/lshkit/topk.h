@@ -173,7 +173,7 @@ public:
     float recall (const Topk<KEY> &topk /* to be evaluated */) const
     {
         unsigned matched = 0;
-        if (this->size() == 0) return 1.0;
+        //if (this->size() == 0) return 1.0;
         for (typename Base::const_iterator ii = this->begin(); ii != this->end(); ++ii)
         {
             for (typename Base::const_iterator jj = topk.begin(); jj != topk.end(); ++jj)
@@ -185,7 +185,7 @@ public:
                 }
             }
         }
-        return float(matched)/float(this->size());
+        return float(matched + 1)/float(this->size() + 1);
     }
 
     unsigned getK () const {

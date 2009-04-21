@@ -27,6 +27,8 @@
   * gathered by fitdata and the MPLSH parameters.  It extrapolates
   * the performance to a dataset of N points.
   *
+  * Either -K or -r, but not both should be used.
+  *
 \verbatim
 Allowed options:
   -h [ --help ]           produce help message.
@@ -35,6 +37,7 @@ Allowed options:
   -M [ -- ] arg (=1)
   -W [ -- ] arg (=1)
   -K [ --topk ] arg (=50)
+  -r [ --radius ] arg     radius
   -N [ --size ] arg       size of dataset
   -P [ --param ] arg      data parameter file
 \endverbatim
@@ -48,6 +51,7 @@ int main (int argc, char *argv[])
 {
     double w;
     unsigned N, K, T, L, M;
+    double R;
     string data_param;
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -57,6 +61,7 @@ int main (int argc, char *argv[])
         (",M", po::value<unsigned>(&M)->default_value(1), "")
         (",W", po::value<double>(&w)->default_value(1), "")
         ("topk,K", po::value<unsigned>(&K)->default_value(50), "")
+        ("radius,r", po::value<double>(&R)->default_value(1.0), "")
         ("size,N", po::value<unsigned>(&N), "size of dataset")
         ("param,P", po::value<string>(&data_param), "data parameter file")
         ;
@@ -81,7 +86,9 @@ int main (int argc, char *argv[])
     model.setM(M);
     model.setW(1.0);
 
-    cout << model.avgRecall() << '\t' << model.cost() << endl;
+    double recall = vm.count("radius") > 0 ? model.recall(R) : model.avgRecall();
+
+    cout << recall << '\t' << model.cost() << endl;
 
     return 0;
 }

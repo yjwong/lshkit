@@ -75,6 +75,7 @@
   -L # hash tables to use.
   -T # of bins probed in each hash table
   -R required recall.
+  -r radius
   -K K-NNs to find.
  \endverbatim
  * 
@@ -165,13 +166,22 @@ tune::Interval intervals[]= {{MIN_L, MAX_L + 1},
 double target_recall;
 
 MultiProbeLshDataModel *model;
+double R;
 
-double recall (const tune::Input &x) {
+double recall_K (const tune::Input &x) {
     model->setL(x[0]);
     model->setT(x[1]);
     model->setM(MAX_M - x[2]);
     model->setW(MIN_W + DELTA_W * x[3]);
     return model->avgRecall();
+}
+
+double recall_R (const tune::Input &x) {
+    model->setL(x[0]);
+    model->setT(x[1]);
+    model->setM(MAX_M - x[2]);
+    model->setW(MIN_W + DELTA_W * x[3]);
+    return model->recall(R);
 }
 
 double cost (const tune::Input &x) {
@@ -182,8 +192,12 @@ double cost (const tune::Input &x) {
     return model->cost();
 }
 
-bool constraint (const tune::Input &x) {
-    return recall(x) > target_recall;
+bool constraint_K (const tune::Input &x) {
+    return recall_K(x) > target_recall;
+}
+
+bool constraint_R (const tune::Input &x) {
+    return recall_R(x) > target_recall;
 }
 
 int main (int argc, char *argv[])
@@ -191,6 +205,7 @@ int main (int argc, char *argv[])
     int T, L, M;
     double W;
     unsigned N, K;
+    bool do_K = true;
     string data_param;
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -203,6 +218,7 @@ int main (int argc, char *argv[])
         ("param,P", po::value<string>(&data_param), "data parameter file.")
         ("recall,R", po::value<double>(&target_recall)->default_value(0.9), "desired recall.")
         ("topk,K", po::value<unsigned>(&K)->default_value(20), "")
+        ("radius,r", po::value<double>(&R), "")
         ;
 
     po::variables_map vm;
@@ -213,6 +229,10 @@ int main (int argc, char *argv[])
     {
         cout << desc;
         return 0;
+    }
+
+    if (vm.count("radius")) {
+        do_K = false;
     }
 
     if (L <= 0 || T <= 0) {
@@ -257,12 +277,13 @@ int main (int argc, char *argv[])
 
     tune::Range range(intervals, intervals + sizeof intervals /sizeof intervals[0]);
     tune::Input input;
-    bool ok = tune::Tune(range, constraint, &input);
+    bool ok = do_K ? tune::Tune(range, constraint_K, &input)
+                   : tune::Tune(range, constraint_R, &input);
 
     if (ok) {
         cout << boost::format("L = %d\tT = %d\tM = %d\tW = %g\trecall = %g\tcost = %g")
             % input[0] % input[1] % (MAX_M - input[2]) % ((MIN_W + DELTA_W * input[3]) * sqrt(scale))
-            % recall(input) % cost(input) << endl;
+            % (do_K ? recall_K(input) : recall_R(input)) % cost(input) << endl;
     } else {
         cout << "Failed." << endl;
     }
