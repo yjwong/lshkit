@@ -1,3 +1,7 @@
+lshkit snapshot - 2009-04-30
+Thanks to the Matlab scripts published by Y. Weiss, LSHKIT is now able to make use of
+externally trained spectral hash functions.  See the class lshkit::SpectralHash.
+
 lshkit snapshot - 2009-03-02
 
 Introduced experimental scanner interface.  Scanner is a unary functional object which is passed into

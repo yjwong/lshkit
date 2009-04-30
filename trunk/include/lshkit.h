@@ -192,6 +192,7 @@
 #include <lshkit/topk.h>
 #include <lshkit/matrix.h>
 #include <lshkit/eval.h>
+#include <lshkit/spectral-hash.h>
 
 #endif
 
