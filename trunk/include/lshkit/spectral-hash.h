@@ -57,6 +57,8 @@ class SpectralHash
     std::vector<float> mn;
     std::vector<std::vector<float> > omegas;
 public:
+    typedef unsigned char CHUNK;
+    static const unsigned CHUNK_BIT = sizeof(CHUNK) * 8; // #bits in CHUNK
     struct Parameter
     {
     // NO PARAMETER IS DEFINED.
@@ -130,7 +132,7 @@ public:
         for (unsigned i = 0; i < pc.size(); ++i) {
             X[i] = 0;
             for (unsigned j = 0; j < pc[i].size(); ++j) {
-                X[i] += pc[i][j] * obj[j];
+                X[i] += pc[i][j] * in[j];
             }
             X[i] -= mn[i];
         }
