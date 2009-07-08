@@ -63,7 +63,7 @@ void Matrix<T>::load (std::istream &is)
     verify(is);
     verify(header[0] == sizeof(T));
     reset(header[2], header[1]);
-    unsigned sz = sizeof(T) * dim * N;
+    size_t sz = sizeof(T) * dim * N;
     is.read((char *)dims, sz);
     verify(is);
 }
@@ -77,7 +77,7 @@ void Matrix<T>::save (std::ostream &os)
     header[2] = dim;
     os.write((char *)header, sizeof header);
     verify(os);
-    unsigned sz = sizeof(T) * dim * N;
+    size_t sz = sizeof(T) * dim * N;
     os.write((char *)dims, sz);
     verify(os);
 }
