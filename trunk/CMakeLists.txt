@@ -5,7 +5,7 @@ PROJECT(LSHKIT)
 
 #SET(CMAKE_CXX_FLAGS_DEBUG "-g")
 #SET(CMAKE_CXX_FLAGS_DEBUG "-O3 -g -pg -fno-inline -fno-default-inline")
-#SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -pg -ffast-math")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -ffast-math")
 #SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -xP")
 #SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "-g -static")
 #SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "-g -pg")
