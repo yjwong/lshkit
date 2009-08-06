@@ -46,9 +46,9 @@ void Matrix<T>::peek (const std::string &path, int *elem_size, int *size, int *d
     unsigned header[3]; /* entry size, row, col */
     assert(sizeof header == 3*4);
     std::ifstream is(path.c_str(), std::ios::binary);
-    verify(is);
+    BOOST_VERIFY(is);
     is.read((char *)header, sizeof header);
-    verify(is);
+    BOOST_VERIFY(is);
     *elem_size = header[0];
     *size = header[1];
     *dim = header[2];
@@ -60,12 +60,12 @@ void Matrix<T>::load (std::istream &is)
     unsigned header[3]; /* entry size, row, col */
     assert(sizeof header == 3*4);
     is.read((char *)header, sizeof header);
-    verify(is);
-    verify(header[0] == sizeof(T));
+    BOOST_VERIFY(is);
+    BOOST_VERIFY(header[0] == sizeof(T));
     reset(header[2], header[1]);
     size_t sz = sizeof(T) * dim * N;
     is.read((char *)dims, sz);
-    verify(is);
+    BOOST_VERIFY(is);
 }
 
 template <class T>
@@ -76,10 +76,10 @@ void Matrix<T>::save (std::ostream &os)
     header[1] = N;
     header[2] = dim;
     os.write((char *)header, sizeof header);
-    verify(os);
+    BOOST_VERIFY(os);
     size_t sz = sizeof(T) * dim * N;
     os.write((char *)dims, sz);
-    verify(os);
+    BOOST_VERIFY(os);
 }
 
 template <class T>
@@ -105,18 +105,18 @@ void Matrix<T>::map (const std::string &path) {
     int size = 0;
 
     fd = open(path.c_str(), O_RDONLY);
-    verify(fd >= 0);
+    BOOST_VERIFY(fd >= 0);
 
-    if (read(fd, &size, 4) != sizeof(size)) verify(0);
-    if (read(fd, &N, 4) != sizeof(N)) verify(0);
-    if (read(fd, &dim, 4) != sizeof(dim)) verify(0);
+    if (read(fd, &size, 4) != sizeof(size)) BOOST_VERIFY(0);
+    if (read(fd, &N, 4) != sizeof(N)) BOOST_VERIFY(0);
+    if (read(fd, &dim, 4) != sizeof(dim)) BOOST_VERIFY(0);
 
-    verify(size == sizeof(T));
+    BOOST_VERIFY(size == sizeof(T));
 
     size_t sz = sizeof(T) * size_t(dim) * size_t(N);
     
     char *start = (char *)mmap(NULL, sz, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (start == MAP_FAILED) { verify(0); }
+    if (start == MAP_FAILED) { BOOST_VERIFY(0); }
     dims = (T *)(start + 3 * 4);
 
 }
@@ -124,7 +124,7 @@ void Matrix<T>::map (const std::string &path) {
 template <class T>
 void Matrix<T>::unmap () {
     char *start = (char *)dims - 3 * 4;
-    if (munmap(start, sizeof(T) * size_t(dim) * size_t(N)) != 0) verify(0);
+    if (munmap(start, sizeof(T) * size_t(dim) * size_t(N)) != 0) BOOST_VERIFY(0);
     close(fd);
 
     dims = 0;

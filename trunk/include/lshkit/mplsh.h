@@ -304,7 +304,7 @@ public:
         Super::load(ar);
         param_.serialize(ar, 0);
         recall_.load(ar);
-        verify(ar);
+        BOOST_VERIFY(ar);
     }
 
     /// Save to the index to stream.
@@ -313,7 +313,7 @@ public:
         Super::save(ar);
         param_.serialize(ar, 0);
         recall_.save(ar);
-        verify(ar);
+        BOOST_VERIFY(ar);
     }
 
     /// Query for K-NNs.

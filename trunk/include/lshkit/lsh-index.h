@@ -72,8 +72,8 @@ public:
     template <typename Engine>
     void init (const Parameter &param, Engine &engine, unsigned L)
     {
-        verify(lshs_.size() == 0);
-        verify(tables_.size() == 0);
+        BOOST_VERIFY(lshs_.size() == 0);
+        BOOST_VERIFY(tables_.size() == 0);
         lshs_.resize(L);
         tables_.resize(L);
 

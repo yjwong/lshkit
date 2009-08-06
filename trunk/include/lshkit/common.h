@@ -30,6 +30,7 @@
 #include <limits>
 #include <vector>
 #include <stdexcept>
+#include <boost/assert.hpp>
 #include <boost/foreach.hpp>
 #include <boost/random.hpp>
 
@@ -43,47 +44,6 @@
 #include <lshkit/concept.h>
 #else
 #define BOOST_CONCEPT_ASSERT(A)
-#endif
-
-/** \def panic(fmt,...)
- *  \brief Print a message and quit the program.
- *  The interface is like printf, but it prepends the
- *  source file name and line number to the output.
- */
-#ifndef panic
-#if defined(WIN32)
-#define panic(_fmt, ...) \
-    do { \
-        lshkit::panic_intern("%s: %s: %d: "_fmt, \
-                        __FILE__, \
-                        __FUNCTION__, \
-                        __LINE__ , \
-                        ## __VA_ARGS__); \
-    } while (0)
-#else
-#define panic(_fmt, _args...) \
-    do { \
-        lshkit::panic_intern("%s: %s: %d: "_fmt, \
-                        __FILE__, \
-                        __FUNCTION__, \
-                        __LINE__ , \
-                        ## _args); \
-    } while (0)
-#endif
-#endif
-
-/** \def verify(expression)
- *  \brief A runtime version of assert.
- */
-#ifndef verify
-#define verify(_x) \
-    do { \
-        if (_x) { \
-            /* noop */ \
-        } else { \
-            panic("!(%s)", #_x); \
-        } \
-    } while (0)
 #endif
 
 namespace lshkit {
