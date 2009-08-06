@@ -132,7 +132,7 @@ static double recall (__MpLshMdlHlpr *param)
     if (workspace == NULL)
     {
         workspace = gsl_integration_workspace_alloc(LIMIT);
-        verify(workspace != NULL);
+        BOOST_VERIFY(workspace != NULL);
     }
     I.params = param;
     I.function = recall_helper;

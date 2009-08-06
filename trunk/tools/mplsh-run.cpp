@@ -198,7 +198,7 @@ int main (int argc, char *argv[])
             cout << "LOADING INDEX..." << endl;
             timer.restart();
             index.load(is);
-            verify(is);
+            BOOST_VERIFY(is);
             cout << boost::format("LOAD TIME: %1%s.") % timer.elapsed() << endl;
             index_loaded = true;
         }

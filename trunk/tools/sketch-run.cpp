@@ -133,8 +133,8 @@ int main (int argc, char *argv[])
             timer.restart();
             sketcher.load(is);
             index.load(is);
-            verify(is);
-            verify(M <= sketcher.getChunks());
+            BOOST_VERIFY(is);
+            BOOST_VERIFY(M <= sketcher.getChunks());
             cout << boost::format("LOAD TIME: %1%s.") % timer.elapsed() << endl;
             index_loaded = true;
         }
@@ -183,7 +183,7 @@ int main (int argc, char *argv[])
         }
     }
 
-    verify(index.getSize() == data.getSize());
+    BOOST_VERIFY(index.getSize() == data.getSize());
 
     if (do_benchmark) {
 
