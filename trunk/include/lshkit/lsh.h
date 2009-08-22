@@ -33,6 +33,46 @@
 
 namespace lshkit {
 
+class TrivialLsh
+{
+public:
+    // Nothing
+    struct Parameter
+    {
+    };
+
+    typedef const float * Domain;
+
+    TrivialLsh ()
+    {
+    }
+
+    template <typename RNG>
+    void reset(const Parameter &param, RNG &rng)
+    {
+    }
+
+    template <typename RNG>
+    TrivialLsh(const Parameter &param, RNG &rng)
+    {
+    }
+
+    unsigned getRange () const
+    {
+        return 1;
+    }
+
+    unsigned operator () (Domain obj) const
+    {
+        return 0;
+    }
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+    }
+};
+
 /// Stable distribution based LSH.
 /**
  * This LSH is defined on the D-dimensional vector space.  For a vector X, the

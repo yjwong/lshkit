@@ -33,11 +33,6 @@ INCLUDE_DIRECTORIES(${LSHKIT_SOURCE_DIR}/include ${GSL_INCLUDE_DIR}
     ${Boost_INCLUDE_DIR})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 
-IF (Boost_FOUND)
-ELSE (Boost_FOUND)
-ADD_SUBDIRECTORY("3rd-party/boost/libs/program_options/src/")
-ENDIF (Boost_FOUND)
-
 ADD_SUBDIRECTORY("src")
 ADD_SUBDIRECTORY("tools")
 
