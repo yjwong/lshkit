@@ -42,7 +42,7 @@ public:
     {
         unsigned K;
         unsigned dim;
-        const std::string path;
+        std::string path;
     };
 
     typedef const float * Domain;
