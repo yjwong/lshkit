@@ -29,7 +29,7 @@ class VQ
 {
     unsigned dim;
     unsigned K;
-    std::vector<float> centers;
+    std::vector<float> means;
 
     void *tree;
 
@@ -47,7 +47,7 @@ public:
 
     typedef const float * Domain;
 
-    VQ ()
+    VQ (): tree(0)
     {
     }
 
@@ -56,15 +56,15 @@ public:
     {
         dim = param.dim;
         K = param.K;
-        centers.resize(dim * K);
+        means.resize(dim * K);
         std::ifstream is(param.path.c_str(), std::ios::binary);
-        is.read((char *)&centers[0], centers.size() * sizeof(float));
+        is.read((char *)&means[0], means.size() * sizeof(float));
         BOOST_VERIFY(is);
         init();
     }
 
     template <typename RNG>
-    VQ(const Parameter &param, RNG &rng)
+    VQ(const Parameter &param, RNG &rng) : tree(0)
     {
         reset(param, rng);
     }
@@ -88,7 +88,7 @@ public:
     {
         ar & dim;
         ar & K;
-        ar & centers;
+        ar & means;
     }
 };
 

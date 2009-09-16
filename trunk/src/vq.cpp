@@ -26,8 +26,9 @@
 namespace lshkit
 {
     void VQ::init () {
+        if (tree != 0) free();
         tree = kd_tree_alloc(K, dim);
-        kd_tree_index((kd_tree_t *)tree, &centers[0]);
+        kd_tree_index((kd_tree_t *)tree, &means[0]);
     }
 
     void VQ::free () {

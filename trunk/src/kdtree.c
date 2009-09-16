@@ -93,6 +93,7 @@ kd_tree_t *kd_tree_alloc (unsigned K, unsigned dim) {
     verify(tree->bnds.lo);
     tree->bnds.hi = (float *)malloc(dim * sizeof(float));
     verify(tree->bnds.hi);
+    return tree;
 }
 
 void kd_tree_free (kd_tree_t *tree) {
@@ -249,6 +250,7 @@ void kd_tree_index (kd_tree_t *tree, const float *means) {
     kd_idx = (unsigned *)malloc(tree->K * sizeof(unsigned));
     verify(kd_idx);
     tree->next_node = 0;
+    // fprintf(stderr, "XXX: %llu.\n", tree->nodes);
     verify(tree->nodes > (kd_node_t *)(unsigned long long)tree->K);
 
     // init idx to an arbitrary permutation
@@ -368,6 +370,17 @@ unsigned kd_tree_search (kd_tree_t *tree, const float *pt, unsigned *cnt) {
     kd_search_node(tree->nodes, &stat, d2b);
 
     *cnt = stat.cnt;
+
+    /*
+    {
+        // fprintf(stderr, "C");
+        unsigned r = kd_tree_ln_search(tree, pt, cnt);
+        if (r != stat.nn) {
+            float l = l2sqr(pt, tree->means + tree->dim * r, tree->dim);
+            fprintf(stderr, "KDTREE: %u %g %u %g\n", stat.nn, stat.nn_dist, r, l);
+        }
+    }
+    */
 
     return stat.nn;
 }
