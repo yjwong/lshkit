@@ -48,12 +48,20 @@
 
 namespace lshkit {
 
+static inline std::ostream &operator & (std::ostream &os, int i) {
+    return os.write((const char *)&i, sizeof(i));
+}
+
 static inline std::ostream &operator & (std::ostream &os, unsigned i) {
     return os.write((const char *)&i, sizeof(i));
 }
 
 static inline std::ostream &operator & (std::ostream &os, float i) {
     return os.write((const char *)&i, sizeof(i));
+}
+
+static inline std::istream &operator & (std::istream &is, int &i) {
+    return is.read((char *)&i, sizeof(i));
 }
 
 static inline std::istream &operator & (std::istream &is, unsigned &i) {
