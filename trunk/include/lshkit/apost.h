@@ -245,6 +245,7 @@ private:
     void query_helper (Domain obj, float recall, unsigned T, SCANNER &scanner) const
     {
         std::vector<unsigned> seq;
+        recall = 1.0 - exp(1.0/Super::lshs_.size() * log(1.0 - recall));
         for (unsigned i = 0; i < Super::lshs_.size(); ++i) {
             model[i].genProbeSequence(Super::lshs_[i], obj, recall, T, &seq);
             BOOST_FOREACH(unsigned j, seq) {

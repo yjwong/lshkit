@@ -24,35 +24,42 @@
 #include <lshkit.h>
 
 /**
-  * \file mplsh-run.cpp
-  * \brief Example of using MPLSH.
+  * \file apost-run.cpp
+  * \brief Example of using A Posteriori MPLSH.
   *
-  * This program is an example of using MPLSH index.
+  * This program is an example of using A Posteriori MPLSH index.
   *
-  * The program reconstruct the LSH index by default.  You can give the
-  * --index option to make the program save the LSH index.  The next
-  * time you run the program with the same --index option, the program
-  * will try to load the previously saved index.  When a saved index is
-  * used, you need to make sure that the dataset and other parameters match
-  * the previous run.  However, the benchmark file, Q and K can be different.
+  * You need to run this program twice: once for index building
+  * and training, once for benchmarking.
+  * For index building (with --build), you need to specify the following parameters:
+  *     -W -M -L -Q -K|-R -D -B --index --build
+  * Here the benchmark is used to train the a posteriori model.  The index
+  * will be written to the --index parameter.
+  * For benchmarking (without --build), you need to specify the following:
+  *     -Q -K|-R -D -B --index -T|--recall
+  *
+  * The benchmark provided for training and benchmarking should be different.
+  * To generate the benchmark file, use the scan program with different --seed
+  * parameters.
   *
 \verbatim
-Allowed options:
-  -h [ --help ]                   produce help message.
+  -h [ --help ]                         produce help message.
   -W [ -- ] arg (=1)
   -M [ -- ] arg (=1)
-  -T [ -- ] arg (=1)              # probes
-  -L [ -- ] arg (=1)              # hash tables
-  -N [ -- ] arg (=2500)           # quantization
-  -Q [ -- ] arg (=100)            # queries
-  -K [ -- ] arg (=50)             # nearest neighbor to retrieve
-  -R [ -- ] arg (=3.40282347e+38) R-NN distance range
-  --recall arg                    desired recall
-  -D [ --data ] arg               data file
-  -B [ --benchmark ] arg          benchmark file
-  --build                         build index
-  --index arg                     index file
-  -H [ -- ] arg (=1017881)        hash table size, use the default value.
+  -N [ -- ] arg (=2500)
+  -T [ -- ] arg (=1)                    # probes
+  -L [ -- ] arg (=1)                    # hash tables
+  -Q [ -- ] arg (=100)                  # queries
+  -K [ -- ] arg (=0)                    # nearest neighbor to retrieve
+  -R [ --radius ] arg (=3.40282347e+38) R-NN distance range (L2)
+  --recall arg                          desired recall
+  -D [ --data ] arg                     data file
+  -B [ --benchmark ] arg                benchmark file
+  --index arg                           index file
+  --build                               build index, using benchmark as
+                                        training examples
+  -H [ -- ] arg (=1017881)              hash table size, use the default value.
+  --expand arg (=0)
 \endverbatim
   */
 
