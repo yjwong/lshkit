@@ -122,6 +122,12 @@ struct APostLsh
         return r;
     }
 
+    void apply1 (Domain obj, std::vector<float> *h) const {
+        for (unsigned i = 0; i < M; ++i) {
+            h->at(i) = apply1(obj, i);
+        }
+    }
+
     unsigned operator () (Domain obj)
     {
         unsigned r2 = 0;
@@ -168,7 +174,7 @@ struct APostExample {
 };
 
 struct PrH {    // Pr[h] of certain compnent
-    unsigned h;
+    int h;
     float pr;
     template<class Archive>
 
@@ -245,6 +251,7 @@ private:
     void query_helper (Domain obj, float recall, unsigned T, SCANNER &scanner) const
     {
         std::vector<unsigned> seq;
+        BOOST_VERIFY(recall <= 1.0);
         recall = 1.0 - exp(1.0/Super::lshs_.size() * log(1.0 - recall));
         for (unsigned i = 0; i < Super::lshs_.size(); ++i) {
             model[i].genProbeSequence(Super::lshs_[i], obj, recall, T, &seq);
@@ -309,7 +316,7 @@ public:
     template <typename SCANNER>
     void query (Domain obj, unsigned T, SCANNER &scanner) const
     {
-        query_helper(obj, std::numeric_limits<float>::max(), T, scanner);
+        query_helper(obj, 1.0, T, scanner);
     }
 
     /// Query for K-NNs, try to achieve the given recall by adaptive probing.

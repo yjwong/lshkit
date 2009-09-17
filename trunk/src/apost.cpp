@@ -22,6 +22,7 @@
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
 #include <boost/progress.hpp>
+#include <boost/format.hpp>
 #include <lshkit/apost.h>
 
 namespace lshkit
@@ -36,12 +37,11 @@ struct ExampleModel {
 
     void estimate (const APostLsh &lsh, const APostExample &example)
     {
+#if 0
         // calculate H values
         const float *query = example.query;
         H.resize(lsh.M);
-        for (unsigned i = 0; i < lsh.M; ++i) {
-            H[i] = lsh.apply1(query, i);
-        }
+        lsh.apply1(query, &H);
 
         // mean & cov matrix of examples
         const std::vector<const float *> &results = example.results;
@@ -76,6 +76,7 @@ struct ExampleModel {
                 }
             }
         }
+
         for (unsigned i = 0; i < dim; i++) {
             for (unsigned j = 0; j <= i; j++) {
                 cov[i][j] /= (results.size() - 1);
@@ -84,21 +85,51 @@ struct ExampleModel {
 
         // mean & std of hash values
         mean.resize(lsh.M);
+        lsh.apply1(&M[0], &mean);
+
         var.resize(lsh.M);
         for (unsigned i = 0; i < lsh.M; i++) { // for each hash component
-            mean[i] = lsh.apply1(&M[0], i);
             var[i] = 0;
-            for (unsigned ii = 0; ii < lsh.M; ii++) {
+            for (unsigned ii = 0; ii < lsh.dim; ii++) {
                 unsigned jj;
                 for (jj = 0; jj <= ii; jj++) {
                     var[i] += lsh.a[i][ii] * cov[ii][jj] * lsh.a[i][jj];
                 }
-                for (; jj < lsh.M; jj++) {
+                for (; jj < lsh.dim; jj++) {
                     var[i] += lsh.a[i][ii] * cov[jj][ii] * lsh.a[i][jj];
                 }
             }
             var[i] /= sqr(lsh.W);
         }
+#else   // equivalent but simpler method: directly calculate the mean & var of h values
+        
+        // calculate H values
+        const float *query = example.query;
+        H.resize(lsh.M);
+        lsh.apply1(query, &H);
+
+        // mean & cov matrix of examples
+        mean.resize(lsh.M);
+        var.resize(lsh.M);
+        const std::vector<const float *> &results = example.results;
+
+        for (unsigned i = 0; i < lsh.M; ++i) {
+            float sum = 0; 
+            float sum2 = 0;
+            BOOST_FOREACH(const float *v, results) {
+                float h = lsh.apply1(v, i);
+                sum += h;
+                sum2 += sqr(h);
+            }
+            mean[i] = sum / results.size();
+            var[i] = (sum2 - mean[i] * sum)/(results.size() - 1);
+        }
+#endif
+#ifdef DEBUGGING
+        for (unsigned i = 0; i < lsh.M; ++i) {
+            std::cout << H[i] << ':' << mean[i] << ':' << var[i] << std::endl;
+        }
+#endif
     }
 };
 
@@ -125,9 +156,9 @@ public:
     }
 
     void estimate (unsigned m, float h, float *mean, float *std) { // mth hash component
-        float mm = 0, vv = 0, ss = 0, k;
+        float mm = 0, vv = 0, ss = 0;
         for (unsigned i = 0; i < M.size(); i++) { // for each example
-            k = gsl_ran_gaussian_pdf(M[i].H[m] - h, sigma);
+            float k = gsl_ran_gaussian_pdf(M[i].H[m] - h, sigma);
             mm += k * M[i].mean[m];
             vv += k * M[i].var[m];
             ss += k;
@@ -135,7 +166,7 @@ public:
         mm /= ss;
         vv /= ss;
         *mean = mm;
-        *std = sqrt(vv);
+        *std = std::sqrt(vv);
     }
 };
 
@@ -150,9 +181,9 @@ void APostModel::train (const APostLsh &lsh,
     Nz = N;
     ex = expand;
     GaussianHashModel parzen(lsh, examples, k_sigma);
-    umin = lsh.umin;
-    umax = lsh.umax;
 
+    umin.resize(lsh.M);
+    umax.resize(lsh.M);
     lookup.resize(lsh.M);
     means.resize(lsh.M);
     stds.resize(lsh.M);
@@ -161,15 +192,12 @@ void APostModel::train (const APostLsh &lsh,
     boost::progress_display progress(lsh.M * Nz);
     for (unsigned m = 0; m < lsh.M; ++m) {
         {
-            float ex = expand * (umax[m] - umin[m]);
-            umin[m] -= ex;
-            umax[m] += ex;
+            float ex = expand * (lsh.umax[m] - lsh.umin[m]);
+            umin[m] = lsh.umin[m] - ex;
+            umax[m] = lsh.umax[m] + ex;
         }
 
         float delta = (umax[m] - umin[m]) / Nz;
-        int minh(std::floor(umin[m]));
-        int maxh(std::floor(umax[m])); // min & max inclusive
-        unsigned size = maxh - minh + 1;
 
         lookup[m].resize(Nz);
         means[m].resize(Nz);
@@ -181,11 +209,42 @@ void APostModel::train (const APostLsh &lsh,
             means[m][n] = mean;
             stds[m][n] = std;
             std::vector<PrH> &lmn = lookup[m][n];
+#if 0    // this is the original method
+            // a losts of h values will have very small probability and
+            // those are essentially not useful
+            int minh(std::floor(umin[m]));
+            int maxh(std::floor(umax[m])); // min & max inclusive
+            unsigned size = maxh - minh + 1;
+            BOOST_VERIFY(size >= 1);
             lmn.resize(size);
-            for (int h = 0; h < size; ++h) {
-                lmn[h].h = (unsigned)(minh + h);
-                lmn[h].pr = GaussianInterval(mean, std, minh + h, minh + h + 1);
+            for (int h = minh; h <= maxh; ++h) {
+                lmn[h].h = h;
+                lmn[h].pr = GaussianInterval(mean, std, float(h), float(h + 1));
             }
+#else       // here we only generate those h values with reasonably large probability
+            {
+                const static float THRESHOLD = 1e-7;
+                int h0(std::floor(mean));
+                for (int h = h0; ; h++) {
+                    PrH prh;
+                    prh.h = h;
+                    prh.pr = GaussianInterval(mean, std, float(h), float(h+1));
+                    if (prh.pr < THRESHOLD) break;
+                    lmn.push_back(prh);
+
+                }
+                for (int h = h0 - 1; ; h--) {
+                    PrH prh;
+                    prh.h = h;
+                    prh.pr = GaussianInterval(mean, std, float(h), float(h+1));
+                    if (prh.pr < THRESHOLD) break;
+                    lmn.push_back(prh);
+
+                }
+                BOOST_VERIFY(lmn.size() > 0);
+            }
+
+#endif
             std::sort(lmn.begin(), lmn.end());
             ++progress;
         }
@@ -196,7 +255,9 @@ struct PrC {
     unsigned m;
     const std::vector<PrH> *prh;
     friend bool operator < (const PrC &c1, const PrC &c2) {
-        return c1.prh->at(0).pr > c2.prh->at(0).pr;
+        if (c1.prh->size() <= 1) return false;
+        if (c2.prh->size() <= 1) return true;
+        return c1.prh->at(1).pr > c2.prh->at(1).pr;
     }
 };
 
@@ -221,6 +282,7 @@ struct Probe {
     bool canShift () const {
         if (off[last] != 1) return false;
         if (last + 1 >= off.size()) return false;
+        if (range->at(last + 1) <= 1) return false;
         return true;
     }
 
@@ -232,6 +294,7 @@ struct Probe {
 
     bool canExpand () const {
         if (last + 1 >= off.size()) return false;
+        if (range->at(last + 1) <= 1) return false;
         return true;
     }
 
@@ -265,7 +328,7 @@ struct Probe {
                     const std::vector<PrC> &pl) {
         unsigned r = 0;
         for (unsigned i = 0; i < lsh.M; ++i) {
-            r += lsh.c[pl[i].m] * pl[i].prh->at(off[i]).h;
+            r += lsh.c[pl[i].m] * unsigned(pl[i].prh->at(off[i]).h);
         }
         return r % lsh.H;
     }
@@ -286,7 +349,11 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
                                 std::vector<unsigned> *seq) const
 {
 #ifdef DEBUGGING
-    std::cout << "Gaussian:" << std::endl;
+    std::cout << "Range of each hash component:" << std::endl;
+    for (unsigned i = 0; i < lsh.M; ++i) {
+        std::cout << boost::format("m = %1%: %2%, %3%") % i % umin[i] % umax[i] << std::endl;
+    }
+    std::cout << "Data distribution on each hash component:" << std::endl;
 #endif
     std::vector<PrC> pl(lsh.M);
     for (unsigned i = 0; i < lsh.M; ++i) {
@@ -309,25 +376,26 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
         pl[i].prh = &lookup[i][qh];
 
 #ifdef DEBUGGING
-        std::cout << i << ':' << h << ':' << qh << '\t' << umin[i] << ':' << umax[i] << '\t' << means[i][qh]
-            << ':' << stds[i][qh] << std::endl;
+
+        std::cout << boost::format("m = %1%: h = %2% mean = %3% std= %4%")
+                                    % i % h % means[i][qh] % stds[i][qh] << std::endl;
 #endif
     }
 
     std::sort(pl.begin(), pl.end());
 #ifdef DEBUGGING
-    std::cout << "PROB:" << std::endl;
+    std::cout << "Sorted probability of windows on each component:" << std::endl;
 
     BOOST_FOREACH(const PrC &prc, pl) {
-        std::cout << prc.m << ":";
+        std::cout << boost::format("m = %1%:") % prc.m;
         BOOST_FOREACH(PrH prh, *prc.prh) {
             if (prh.pr == 0) break;
-            std::cout << ' ' << prh.pr << '@' << (int)prh.h;
+            std::cout << boost::format(" %1%@h=%2%") % prh.pr % prh.h;
         }
         std::cout << std::endl;
     }
 
-    std::cout << "SEQ" << std::endl;
+    std::cout << "Probe sequence" << std::endl;
 #endif
     // generate probe sequence
     seq->clear();
@@ -357,17 +425,15 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
         if (heap.empty()) break;
 
         pop_heap(heap.begin(), heap.end());
-
-        seq->push_back(heap.back().hash(lsh, pl));
-        pr += heap.back().pr;
-#ifdef DEBUGGING
-        std::cout << pr << ", " << heap.back().pr << ":";
-        heap.back().print(pl);
-#endif
-
         Probe p = heap.back();
-
         heap.pop_back();
+
+        seq->push_back(p.hash(lsh, pl));
+        pr += p.pr;
+#ifdef DEBUGGING
+        std::cout << pr << ", " << p.pr << ":";
+        p.print(pl);
+#endif
 
         if (p.canShift()) {
             heap.push_back(p);
@@ -390,6 +456,9 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
             push_heap(heap.begin(), heap.end());
         }
     }
+#ifdef DEBUGGING
+        std::cout << "DONE" << std::endl;
+#endif
 }
 
 }
