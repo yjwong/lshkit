@@ -157,6 +157,7 @@ void APostModel::train (const APostLsh &lsh,
     means.resize(lsh.M);
     stds.resize(lsh.M);
     // for each component h
+    std::cout << "Training LSH table." << std::endl;
     boost::progress_display progress(lsh.M * Nz);
     for (unsigned m = 0; m < lsh.M; ++m) {
         {
@@ -184,7 +185,6 @@ void APostModel::train (const APostLsh &lsh,
             for (int h = 0; h < size; ++h) {
                 lmn[h].h = (unsigned)(minh + h);
                 lmn[h].pr = GaussianInterval(mean, std, minh + h, minh + h + 1);
-//            std::cout << "<" << lmn[h].h << ", " << lmn[h].pr << ">" << std::endl;
             }
             std::sort(lmn.begin(), lmn.end());
             ++progress;
@@ -262,12 +262,14 @@ struct Probe {
         return r % lsh.H;
     }
 
+#ifdef DEBUGGING
     unsigned print (const std::vector<PrC> &pl) {
         BOOST_FOREACH(unsigned v, off) {
             std::cout << ' ' << v;
         }
         std::cout << std::endl;
     }
+#endif
 };
 
 void APostModel::genProbeSequence (const APostLsh &lsh,
@@ -275,7 +277,9 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
                                 float recall, unsigned T,
                                 std::vector<unsigned> *seq) const
 {
+#ifdef DEBUGGING
     std::cout << "Gaussian:" << std::endl;
+#endif
     std::vector<PrC> pl(lsh.M);
     for (unsigned i = 0; i < lsh.M; ++i) {
         pl[i].m = i;
@@ -296,12 +300,15 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
 
         pl[i].prh = &lookup[i][qh];
 
+#ifdef DEBUGGING
         std::cout << i << ':' << h << ':' << qh << '\t' << umin[i] << ':' << umax[i] << '\t' << means[i][qh]
             << ':' << stds[i][qh] << std::endl;
+#endif
     }
 
-    std::cout << "PROB:" << std::endl;
     std::sort(pl.begin(), pl.end());
+#ifdef DEBUGGING
+    std::cout << "PROB:" << std::endl;
 
     BOOST_FOREACH(const PrC &prc, pl) {
         std::cout << prc.m << ":";
@@ -313,6 +320,7 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
     }
 
     std::cout << "SEQ" << std::endl;
+#endif
     // generate probe sequence
     seq->clear();
 
@@ -338,8 +346,10 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
 
         seq->push_back(heap.back().hash(lsh, pl));
         pr += heap.back().pr;
+#ifdef DEBUGGING
         std::cout << pr << ", " << heap.back().pr << ":";
         heap.back().print(pl);
+#endif
 
         Probe p = heap.back();
 
