@@ -30,7 +30,7 @@
   * This program is an example of using A Posteriori MPLSH index.
   *
   * You need to run this program twice: once for index building
-  * and training, once for benchmarking.
+  * and training, once for testing.
   * For index building (with --build), you need to specify the following parameters:
   *     -W -M -L -Q -K|-R -D -B --index --build
   *     -N --expand --k-sigma
@@ -40,7 +40,7 @@
   * Here the benchmark is used to train the a posteriori model.  The index
   * will be written to the --index parameter.
   *
-  * For benchmarking (without --build), you need to specify the following:
+  * For testing (without --build), you need to specify the following:
   *     -Q -K|-R -D -B --index -T|--recall
   *
   * The benchmark provided for training and benchmarking should be different.
@@ -49,7 +49,7 @@
   *
   * Following is a example run on the audio dataset:
   * Training:
-  *     apost-run -D audio.data -B audio.train  -L 10 -T 10 -W 4.32 -M 20 -Q 1000 -K 50 --build --index audio.apost
+  *     apost-run -D audio.data -B audio.train  -L 10 -W 4.32 -M 20 -Q 1000 -K 50 --build --index audio.apost
   * Testig:
   *     apost-run -D audio.data -B audio.query  -T 20 -Q 100 -K 50 --index audio.apost
   *

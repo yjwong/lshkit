@@ -211,7 +211,7 @@ public:
     }
 
     void train (const APostLsh &lsh, const std::vector<APostExample> &examples,
-            unsigned N, float expand = 0.1);
+            unsigned N, float k_sigma = 1.0/5, float expand = 0.1);
 
     void genProbeSequence (const APostLsh &lsh, const float *query,
             float recall, unsigned T, std::vector<unsigned> *probe) const;
