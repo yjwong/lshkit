@@ -146,10 +146,10 @@ static inline float GaussianInterval (float mean, float std, float l, float u) {
 
 void APostModel::train (const APostLsh &lsh,
                         const std::vector<APostExample> &examples,
-                        unsigned N, float expand) {
+                        unsigned N, float k_sigma, float expand) {
     Nz = N;
     ex = expand;
-    GaussianHashModel parzen(lsh, examples);
+    GaussianHashModel parzen(lsh, examples, k_sigma);
     umin = lsh.umin;
     umax = lsh.umax;
 

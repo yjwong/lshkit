@@ -33,14 +33,25 @@
   * and training, once for benchmarking.
   * For index building (with --build), you need to specify the following parameters:
   *     -W -M -L -Q -K|-R -D -B --index --build
+  *     -N --expand --k-sigma
+  * The parameter -N specify the quantization granularity (Nz in equation 17).
+  * For now, do not specify the expand parameter (just use the default).
+  * k-sigma specifies the sigma in Gaussian kernel used in equation 14 & 15.
   * Here the benchmark is used to train the a posteriori model.  The index
   * will be written to the --index parameter.
+  *
   * For benchmarking (without --build), you need to specify the following:
   *     -Q -K|-R -D -B --index -T|--recall
   *
   * The benchmark provided for training and benchmarking should be different.
   * To generate the benchmark file, use the scan program with different --seed
   * parameters.
+  *
+  * Following is a example run on the audio dataset:
+  * Training:
+  *     apost-run -D audio.data -B audio.train  -L 10 -T 10 -W 4.32 -M 20 -Q 1000 -K 50 --build --index audio.apost
+  * Testig:
+  *     apost-run -D audio.data -B audio.query  -T 20 -Q 100 -K 50 --index audio.apost
   *
 \verbatim
   -h [ --help ]                         produce help message.
@@ -60,6 +71,7 @@
                                         training examples
   -H [ -- ] arg (=1017881)              hash table size, use the default value.
   --expand arg (=0)
+  --k-sigmal arg (=0.2)
 \endverbatim
   */
 
@@ -73,7 +85,7 @@ int main (int argc, char *argv[])
     string benchmark;
     string index_file;
 
-    float W, R, desired_recall = 1.0, expand;
+    float W, R, desired_recall = 1.0, expand, k_sigma;
     unsigned M, L, H, Nz;
     unsigned Q, K, T;
     bool do_recall = false;
@@ -98,6 +110,7 @@ int main (int argc, char *argv[])
         ("index", po::value<string>(&index_file), "index file")
         ("build", "build index, using benchmark as training examples")
         (",H", po::value<unsigned>(&H)->default_value(1017881), "hash table size, use the default value.")
+        ("k-sigma", po::value<float>(&k_sigma)->default_value(1.0/5), "")
         ("expand", po::value<float>(&expand)->default_value(0), "")
         ;
 
@@ -194,7 +207,7 @@ int main (int argc, char *argv[])
             }
         }
 
-        index.train(examples, Nz, expand);
+        index.train(examples, Nz, k_sigma, expand);
         cout << boost::format("TRAINING TIME: %1%s.") % timer.elapsed() << endl;
 
         timer.restart();
