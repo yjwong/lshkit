@@ -60,7 +60,7 @@ int main (int argc, char *argv[])
     string data_file;
     string query_file;
 
-    unsigned K, Q, metric;
+    unsigned K, Q, metric, seed;
     float R;
 
     po::options_description desc("Allowed options");
@@ -69,6 +69,7 @@ int main (int argc, char *argv[])
         (",Q", po::value<unsigned>(&Q)->default_value(1), "number of queries to sample.")
         (",K", po::value<unsigned>(&K)->default_value(0), "number of nearest neighbors.")
         (",R", po::value<float>(&R)->default_value(numeric_limits<float>::max()), "distance range to search for")
+        ("seed", po::value<unsigned>(&seed)->default_value(0), "random number seed, 0 to use default.")
         ("metric", po::value<unsigned>(&metric)->default_value(2), "1: L1; 2: L2")
         ("data,D", po::value<string>(&data_file), "dataset path")
         ("benchmark,B", po::value<string>(&query_file), "output benchmark file path")
@@ -88,7 +89,7 @@ int main (int argc, char *argv[])
     Matrix<float> data(data_file);
 
     Benchmark<unsigned> bench;
-    bench.init(Q, data.getSize());
+    bench.init(Q, data.getSize(), seed);
     boost::timer timer;
 
     timer.restart();
