@@ -112,17 +112,22 @@ struct APostLsh
         return H;
     }
 
+    float apply1 (Domain obj, unsigned m) const {
+        float r = b[m];
+        for (unsigned j = 0; j < dim; ++j)
+        {
+            r += a[m][j] * obj[j];
+        }
+        r /= W;
+        return r;
+    }
+
     unsigned operator () (Domain obj)
     {
         unsigned r2 = 0;
         for (unsigned i = 0; i < M; ++i)
         {
-            float r1 = b[i];
-            for (unsigned j = 0; j < dim; ++j)
-            {
-                r1 += a[i][j] * obj[j];
-            }
-            r1 /= W;
+            float r1 = apply1(obj, i);
             if (r1 < umin[i]) umin[i] = r1;
             else if (r1 > umax[i]) umax[i] = r1;
             r2 += c[i] * unsigned(int(std::floor(r1)));
@@ -135,16 +140,12 @@ struct APostLsh
         unsigned r2 = 0;
         for (unsigned i = 0; i < M; ++i)
         {
-            float r1 = b[i];
-            for (unsigned j = 0; j < dim; ++j)
-            {
-                r1 += a[i][j] * obj[j];
-            }
-            r1 /= W;
+            float r1 = apply1(obj, i);
             r2 += c[i] * unsigned(int(std::floor(r1)));
         }
         return r2 % H;
     }
+
 
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version)
@@ -189,6 +190,8 @@ class APostModel
     float ex;
     // lookup[M][h_query][h]
     std::vector<std::vector<std::vector<PrH> > > lookup;
+    std::vector<std::vector<float> > means;
+    std::vector<std::vector<float> > stds;
     std::vector<float> umin;
     std::vector<float> umax;
 public:
@@ -201,6 +204,8 @@ public:
         ar & Nz;
         ar & ex;
         ar & lookup;
+        ar & means;
+        ar & stds;
         ar & umin;
         ar & umax;
     }
@@ -303,7 +308,7 @@ public:
     template <typename SCANNER>
     void query (Domain obj, unsigned T, SCANNER &scanner) const
     {
-        query_helper(obj, 1.0, T, scanner);
+        query_helper(obj, std::numeric_limits<float>::max(), T, scanner);
     }
 
     /// Query for K-NNs, try to achieve the given recall by adaptive probing.

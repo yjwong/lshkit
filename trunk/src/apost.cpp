@@ -21,6 +21,7 @@
 #include <queue>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
+#include <boost/progress.hpp>
 #include <lshkit/apost.h>
 
 namespace lshkit
@@ -33,17 +34,13 @@ struct ExampleModel {
     std::vector<float> mean;
     std::vector<float> var;
 
-    void estimate (const APostLsh lsh, const APostExample &example)
+    void estimate (const APostLsh &lsh, const APostExample &example)
     {
         // calculate H values
         const float *query = example.query;
         H.resize(lsh.M);
         for (unsigned i = 0; i < lsh.M; ++i) {
-            H[i] = lsh.b[i];
-            for (unsigned j = 0; j < lsh.dim; ++j) {
-                H[i] += lsh.a[i][j] * query[j];
-            }
-            H[i] /= lsh.W;
+            H[i] = lsh.apply1(query, i);
         }
 
         // mean & cov matrix of examples
@@ -89,12 +86,7 @@ struct ExampleModel {
         mean.resize(lsh.M);
         var.resize(lsh.M);
         for (unsigned i = 0; i < lsh.M; i++) { // for each hash component
-            mean[i] = lsh.b[i];
-            for (unsigned j = 0; j < dim; j++) {
-                mean[i] += M[j] * lsh.a[i][j];
-            }
-            mean[i] /= lsh.W;
-
+            mean[i] = lsh.apply1(&M[0], i);
             var[i] = 0;
             for (unsigned ii = 0; ii < lsh.M; ii++) {
                 unsigned jj;
@@ -147,7 +139,7 @@ public:
     }
 };
 
-static inline float GaussianInterval (unsigned mean, unsigned std, float l, float u) {
+static inline float GaussianInterval (float mean, float std, float l, float u) {
     return gsl_cdf_gaussian_P(u - mean, std)
         - gsl_cdf_gaussian_P(l - mean, std);
 }
@@ -162,7 +154,10 @@ void APostModel::train (const APostLsh &lsh,
     umax = lsh.umax;
 
     lookup.resize(lsh.M);
+    means.resize(lsh.M);
+    stds.resize(lsh.M);
     // for each component h
+    boost::progress_display progress(lsh.M * Nz);
     for (unsigned m = 0; m < lsh.M; ++m) {
         {
             float ex = expand * (umax[m] - umin[m]);
@@ -176,17 +171,23 @@ void APostModel::train (const APostLsh &lsh,
         unsigned size = maxh - minh + 1;
 
         lookup[m].resize(Nz);
+        means[m].resize(Nz);
+        stds[m].resize(Nz);
         // for each quantum of h(q)
         for (unsigned n = 0; n < Nz; ++n) {
             float mean, std;
             parzen.estimate(m, umin[m] + (n + 0.5) * delta, &mean, &std);
+            means[m][n] = mean;
+            stds[m][n] = std;
             std::vector<PrH> &lmn = lookup[m][n];
             lmn.resize(size);
             for (int h = 0; h < size; ++h) {
                 lmn[h].h = (unsigned)(minh + h);
                 lmn[h].pr = GaussianInterval(mean, std, minh + h, minh + h + 1);
+//            std::cout << "<" << lmn[h].h << ", " << lmn[h].pr << ">" << std::endl;
             }
             std::sort(lmn.begin(), lmn.end());
+            ++progress;
         }
     }
 }
@@ -209,7 +210,7 @@ struct Probe {
     }
 
     Probe (unsigned m) {
-        off.resize(0);
+        off.resize(m);
         std::fill(off.begin(), off.end(), 0);
         last = 0;
     }
@@ -245,10 +246,11 @@ struct Probe {
     }
 
     void setPr (const std::vector<PrC> &pl) {
-        pr = 0;
+        pr = 1.0;
         for (unsigned i = 0; i < off.size(); ++i) {
-            pr += pl[i].prh->at(off[i]).pr;
+            pr *= pl[i].prh->at(off[i]).pr;
         }
+//        std::cerr << "PR = " << pr << std::endl;
     }
 
     unsigned hash (const APostLsh &lsh,
@@ -259,6 +261,13 @@ struct Probe {
         }
         return r % lsh.H;
     }
+
+    unsigned print (const std::vector<PrC> &pl) {
+        BOOST_FOREACH(unsigned v, off) {
+            std::cout << ' ' << v;
+        }
+        std::cout << std::endl;
+    }
 };
 
 void APostModel::genProbeSequence (const APostLsh &lsh,
@@ -266,19 +275,12 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
                                 float recall, unsigned T,
                                 std::vector<unsigned> *seq) const
 {
-    /*
-    probe->resize(1);
-    probe->at(0) = lsh.apply_const(query);
-    */
+    std::cout << "Gaussian:" << std::endl;
     std::vector<PrC> pl(lsh.M);
     for (unsigned i = 0; i < lsh.M; ++i) {
         pl[i].m = i;
 
-        float h = lsh.b[i];
-        for (unsigned j = 0; j < lsh.dim; ++j) {
-            h += lsh.a[i][j] * query[j];
-        }
-        h /= lsh.W;
+        float h = lsh.apply1(query, i);
 
         if (h < umin[i]) {
             std::cerr << "hash[" << i << "] out of range " << h << " < umin = " << umin[i] << std::endl;
@@ -290,12 +292,27 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
         }
 
         unsigned qh = (h - umin[i]) * Nz / ( umax[i] - umin[i]);
+        BOOST_VERIFY(qh < lookup[i].size());
 
         pl[i].prh = &lookup[i][qh];
+
+        std::cout << i << ':' << h << ':' << qh << '\t' << umin[i] << ':' << umax[i] << '\t' << means[i][qh]
+            << ':' << stds[i][qh] << std::endl;
     }
 
+    std::cout << "PROB:" << std::endl;
     std::sort(pl.begin(), pl.end());
 
+    BOOST_FOREACH(const PrC &prc, pl) {
+        std::cout << prc.m << ":";
+        BOOST_FOREACH(PrH prh, *prc.prh) {
+            if (prh.pr == 0) break;
+            std::cout << ' ' << prh.pr << '@' << (int)prh.h;
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << "SEQ" << std::endl;
     // generate probe sequence
     seq->clear();
 
@@ -306,9 +323,12 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
     float pr = heap.back().pr;
     seq->push_back(heap.back().hash(lsh, pl));
 
+    if (pr >= recall) return;
+    if (seq->size() >= T) return;
+
     heap.back().off[0] = 1;
     heap.back().setPr(pl);
-    
+
     for (;;) {
         if (pr >= recall) break;
         if (seq->size() >= T) break;
@@ -318,6 +338,8 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
 
         seq->push_back(heap.back().hash(lsh, pl));
         pr += heap.back().pr;
+        std::cout << pr << ", " << heap.back().pr << ":";
+        heap.back().print(pl);
 
         Probe p = heap.back();
 
@@ -341,6 +363,7 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
             push_heap(heap.begin(), heap.end());
         }
     }
+    std::cout << "DONE" << std::endl;
 }
 
 }
