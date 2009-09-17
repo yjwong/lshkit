@@ -204,15 +204,18 @@ struct Probe {
     std::vector<unsigned> off;
     unsigned last;
     float pr;
+    const std::vector<unsigned> *range;
 
     Probe () {
         BOOST_VERIFY(0);
     }
 
-    Probe (unsigned m) {
-        off.resize(m);
+    Probe (const std::vector<unsigned> *range_):
+        off(range_->size()),
+        last(0),
+        range(range_)
+    {
         std::fill(off.begin(), off.end(), 0);
-        last = 0;
     }
 
     bool canShift () const {
@@ -235,6 +238,11 @@ struct Probe {
     void expand () {
         last++;
         off[last] = 1;
+    }
+
+    bool canExtend () const {
+        if (off[last] + 1 >= range->at(last)) return false;
+        return true;
     }
 
     void extend () {
@@ -324,8 +332,14 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
     // generate probe sequence
     seq->clear();
 
+    std::vector<unsigned> range(pl.size());
+    for (unsigned i = 0; i < range.size(); ++i) {
+        range[i] = pl[i].prh->size();
+    }
+
+
     std::vector<Probe> heap;
-    heap.push_back(Probe(lsh.M));
+    heap.push_back(Probe(&range));
 
     heap.back().setPr(pl);
     float pr = heap.back().pr;
@@ -353,11 +367,7 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
 
         Probe p = heap.back();
 
-        {
-            heap.back().extend();
-            heap.back().setPr(pl);
-            push_heap(heap.begin(), heap.end());
-        }
+        heap.pop_back();
 
         if (p.canShift()) {
             heap.push_back(p);
@@ -372,8 +382,14 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
             heap.back().setPr(pl);
             push_heap(heap.begin(), heap.end());
         }
+
+        if (p.canExtend()) {
+            heap.push_back(p);
+            heap.back().extend();
+            heap.back().setPr(pl);
+            push_heap(heap.begin(), heap.end());
+        }
     }
-    std::cout << "DONE" << std::endl;
 }
 
 }

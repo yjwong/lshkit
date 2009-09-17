@@ -279,9 +279,9 @@ public:
         // We tune adaptive probing for KNN distance range [0.0001W, 20W].
     }
 
-    void train (const std::vector<APostExample> &examples, unsigned Nz, float expand) {
+    void train (const std::vector<APostExample> &examples, unsigned Nz, float k_sigma, float expand) {
         for (unsigned i = 0; i < model.size(); ++i) {
-            model[i].train(Super::lshs_[i], examples, Nz, expand);
+            model[i].train(Super::lshs_[i], examples, Nz, k_sigma, expand);
         }
     }
 

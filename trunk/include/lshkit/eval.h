@@ -103,12 +103,13 @@ public:
     }
 
     // Random initialization
-    void init(unsigned Q, unsigned maxID) {
+    void init(unsigned Q, unsigned maxID, unsigned seed = 0) {
         Q_ = Q;
         queries_.resize(Q);
         topks_.resize(Q);
 
         DefaultRng rng;
+        if (seed != 0) rng.seed(seed);
         SampleQueries(&queries_, maxID, rng);
     }
 
