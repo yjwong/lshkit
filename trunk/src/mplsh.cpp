@@ -85,54 +85,5 @@ namespace lshkit
             }
         }
     }
-
-    void MultiProbeLsh::genProbeSequence (Domain obj, std::vector<unsigned>
-            &seq, unsigned T) const
-    {
-        ProbeSequence scores;
-        std::vector<unsigned> base;
-        scores.resize(2 * lsh_.size());
-        base.resize(lsh_.size());
-        for (unsigned i = 0; i < lsh_.size(); ++i)
-        {
-            float delta;
-            base[i] = Super::lsh_[i](obj, &delta);
-            scores[2*i].mask = i;
-            scores[2*i].reserve = 1;    // direction
-            scores[2*i].score = delta;
-            scores[2*i+1].mask = i;
-            scores[2*i+1].reserve = unsigned(-1);
-            scores[2*i+1].score = 1.0 - delta;
-        }
-        std::sort(scores.begin(), scores.end());
-
-        ProbeSequence &tmpl = __probeSequenceTemplates[lsh_.size()];
-
-        seq.clear();
-        for (ProbeSequence::const_iterator it = tmpl.begin();
-                it != tmpl.end(); ++it)
-        {
-            if (seq.size() == T) break;
-            const Probe &probe = *it;
-            unsigned hash = 0;
-            for (unsigned i = 0; i < lsh_.size(); ++i)
-            {
-                unsigned h = base[scores[i].mask];
-                if (probe.mask & leftshift(i))
-                {
-                    if (probe.shift & leftshift(i))
-                    {
-                        h += scores[i].reserve;
-                    }
-                    else
-                    {
-                        h += unsigned(-1) * scores[i].reserve;
-                    }
-                }
-                hash += h * a_[scores[i].mask];
-            }
-            seq.push_back(hash % H_);
-        }
-    }
 }
 

@@ -80,6 +80,41 @@ template <typename T> T sqr (const T &x) { return x * x; }
 
 void panic_intern(const char *fmt, ...);
 
+// Sparse vectors need to be sorted according to coordinate indices.
+template <typename T = float>
+class SparseVector {
+public:
+    struct Coord {
+        int index;
+        T value;
+    };
+
+    typedef T value_type;
+    typedef Coord *iterator;
+    typedef const Coord *const_iterator;
+
+    SparseVector (unsigned s): size_(s), own_(1), data_(new Coord[s]) {
+    }
+
+    SparseVector (unsigned s, Coord *data): size_(s), own_(0), data_(data) {
+    }
+
+    ~SparseVector () {
+        if (own_) delete [] data_;
+    }
+
+    size_t size () const { return size_; }
+    Coord operator [] (unsigned dim) const { return data_[dim]; }
+    Coord &operator [] (unsigned dim) { return data_[dim]; };
+    iterator begin () { return data_; }
+    const_iterator begin () const { return data_; }
+    const_iterator end () const { return data_ + size_; }
+private:
+    unsigned size_;
+    unsigned own_;
+    Coord *data_;
+};
+
 }
 
 

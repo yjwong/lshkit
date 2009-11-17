@@ -189,12 +189,13 @@ public:
 extern ProbeSequenceTemplates __probeSequenceTemplates;
 
 /// Multi-Probe LSH class.
-class MultiProbeLsh: public RepeatHash<GaussianLsh> 
+template <typename TYPE = const float *>
+class MultiProbeLsh: public RepeatHash<StableDistLsh<Gaussian, TYPE> >
 {
     unsigned H_;
 public:
-    typedef RepeatHash<GaussianLsh> Super;
-    typedef Super::Domain Domain;
+    typedef RepeatHash<StableDistLsh<Gaussian, TYPE> > Super;
+    typedef typename Super::Domain Domain;
 
     /**
      * Parameter to MPLSH. 
@@ -213,10 +214,10 @@ public:
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version)
         {
-            ar & range;
-            ar & repeat;
-            ar & dim;
-            ar & W;
+            ar & this->range;
+            ar & this->repeat;
+            ar & this->dim;
+            ar & this->W;
         }
     };
 
@@ -253,16 +254,62 @@ public:
         ar & H_;
     }
 
-    void genProbeSequence (Domain obj, std::vector<unsigned> &seq, unsigned T) const;
+    void genProbeSequence (Domain obj, std::vector<unsigned> &seq, unsigned T) const
+    {
+        ProbeSequence scores;
+        std::vector<unsigned> base;
+        scores.resize(2 * Super::lsh_.size());
+        base.resize(Super::lsh_.size());
+        for (unsigned i = 0; i < Super::lsh_.size(); ++i)
+        {
+            float delta;
+            base[i] = Super::lsh_[i](obj, &delta);
+            scores[2*i].mask = i;
+            scores[2*i].reserve = 1;    // direction
+            scores[2*i].score = delta;
+            scores[2*i+1].mask = i;
+            scores[2*i+1].reserve = unsigned(-1);
+            scores[2*i+1].score = 1.0 - delta;
+        }
+        std::sort(scores.begin(), scores.end());
+
+        ProbeSequence &tmpl = __probeSequenceTemplates[Super::lsh_.size()];
+
+        seq.clear();
+        for (ProbeSequence::const_iterator it = tmpl.begin();
+                it != tmpl.end(); ++it)
+        {
+            if (seq.size() == T) break;
+            const Probe &probe = *it;
+            unsigned hash = 0;
+            for (unsigned i = 0; i < Super::lsh_.size(); ++i)
+            {
+                unsigned h = base[scores[i].mask];
+                if (probe.mask & leftshift(i))
+                {
+                    if (probe.shift & leftshift(i))
+                    {
+                        h += scores[i].reserve;
+                    }
+                    else
+                    {
+                        h += unsigned(-1) * scores[i].reserve;
+                    }
+                }
+                hash += h * Super::a_[scores[i].mask];
+            }
+            seq.push_back(hash % H_);
+        }
+    }
 };
 
 
 /// Multi-Probe LSH index.
-template <typename KEY>
-class MultiProbeLshIndex: public LshIndex<MultiProbeLsh, KEY>
+template <typename KEY, typename T = const float *>
+class MultiProbeLshIndex: public LshIndex<MultiProbeLsh<T>, KEY>
 {
 public:
-    typedef LshIndex<MultiProbeLsh, KEY> Super;
+    typedef LshIndex<MultiProbeLsh<T>, KEY> Super;
     /**
      * Super::Parameter is the same as MultiProbeLsh::Parameter
      */
