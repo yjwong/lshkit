@@ -92,7 +92,7 @@ struct APostLsh
         for (unsigned i = 0; i < M; i++) {
             a[i].resize(dim);
             umin[i] = std::numeric_limits<float>::max();
-            umax[i] = std::numeric_limits<float>::min();
+            umax[i] = -std::numeric_limits<float>::max();
             for (unsigned j = 0; j < dim; j++) {
                 a[i][j] = gaussian();
             }
@@ -250,10 +250,10 @@ private:
     template <typename SCANNER>
     void query_helper (Domain obj, float recall, unsigned T, SCANNER &scanner) const
     {
-        std::vector<unsigned> seq;
         BOOST_VERIFY(recall <= 1.0);
         recall = 1.0 - exp(1.0/Super::lshs_.size() * log(1.0 - recall));
         for (unsigned i = 0; i < Super::lshs_.size(); ++i) {
+            std::vector<unsigned> seq;
             model[i].genProbeSequence(Super::lshs_[i], obj, recall, T, &seq);
             BOOST_FOREACH(unsigned j, seq) {
                 typename Super::Bin const &bin = Super::tables_[i][j];

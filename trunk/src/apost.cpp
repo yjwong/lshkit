@@ -241,7 +241,7 @@ void APostModel::train (const APostLsh &lsh,
                     lmn.push_back(prh);
 
                 }
-                BOOST_VERIFY(lmn.size() > 0);
+                // BOOST_VERIFY(lmn.size() > 0);
             }
 
 #endif
@@ -348,6 +348,7 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
                                 float recall, unsigned T,
                                 std::vector<unsigned> *seq) const
 {
+    seq->clear();
 #ifdef DEBUGGING
     std::cout << "Range of each hash component:" << std::endl;
     for (unsigned i = 0; i < lsh.M; ++i) {
@@ -375,6 +376,8 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
 
         pl[i].prh = &lookup[i][qh];
 
+        if (pl[i].prh->empty()) return;
+
 #ifdef DEBUGGING
 
         std::cout << boost::format("m = %1%: h = %2% mean = %3% std= %4%")
@@ -398,7 +401,6 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
     std::cout << "Probe sequence" << std::endl;
 #endif
     // generate probe sequence
-    seq->clear();
 
     std::vector<unsigned> range(pl.size());
     for (unsigned i = 0; i < range.size(); ++i) {
@@ -457,7 +459,7 @@ void APostModel::genProbeSequence (const APostLsh &lsh,
         }
     }
 #ifdef DEBUGGING
-        std::cout << "DONE" << std::endl;
+    std::cout << "DONE" << std::endl;
 #endif
 }
 

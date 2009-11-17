@@ -268,6 +268,7 @@ int main (int argc, char *argv[])
                 index.query_recall(data[bench.getQuery(i)], desired_recall, query);
                 cost << double(query.cnt())/double(data.getSize());
                 topks[i].swap(query.topk());
+                //exit(-1);
                 ++progress;
             }
         }
@@ -281,6 +282,7 @@ int main (int argc, char *argv[])
                 index.query(data[bench.getQuery(i)], T, query);
                 cost << double(query.cnt())/double(data.getSize());
                 topks[i].swap(query.topk());
+                //exit(-1);
                 ++progress;
             }
         }

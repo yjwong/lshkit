@@ -40,7 +40,6 @@ public:
     // Nothing
     struct Parameter
     {
-        unsigned K;
         unsigned dim;
         std::string path;
     };
@@ -55,9 +54,12 @@ public:
     void reset(const Parameter &param, RNG &rng)
     {
         dim = param.dim;
-        K = param.K;
-        means.resize(dim * K);
         std::ifstream is(param.path.c_str(), std::ios::binary);
+        BOOST_VERIFY(is);
+        is.seekg(0, std::ios::end);
+        K = is.tellg() / sizeof(float) / dim;
+        means.resize(dim * K);
+        is.seekg(0, std::ios::beg);
         is.read((char *)&means[0], means.size() * sizeof(float));
         BOOST_VERIFY(is);
         init();

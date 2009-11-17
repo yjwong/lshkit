@@ -101,12 +101,13 @@ public:
     max (unsigned dim) : dim_(dim) {}
     float operator () (const T *first1, const T *first2) const
     {
-        double r = std::numeric_limits<T>::min();
+        float r = 0;
         for (unsigned i = 0; i < dim_; ++i)
         {
-            r += max(r, std::fabs(first1[i] - first2[i]));
+            float v = std::fabs(first1[i] - first2[i]);
+            if (v > r) r = v;
         }
-        return (float)std::sqrt(r);
+        return r;
     }
 };
 
