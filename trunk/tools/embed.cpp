@@ -148,7 +148,7 @@ public:
 };
 
 /// Random hyperplane LSH. See Section 4.2 of MM08 paper.
-typedef lshkit::Repeat<lshkit::HyperPlaneLsh> HyperPlaneLsh;
+typedef lshkit::Repeat<lshkit::HyperPlaneLsh<const float *> > HyperPlaneLsh;
 typedef lshkit::Histogram<HyperPlaneLsh> HyperPlaneEmbedderBase;
 
 /// Wrapper of the histogram embedder.
