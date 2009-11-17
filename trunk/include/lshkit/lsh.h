@@ -33,6 +33,7 @@
 
 namespace lshkit {
 
+template <typename T = const float *>
 class TrivialLsh
 {
 public:
@@ -41,7 +42,7 @@ public:
     {
     };
 
-    typedef const float * Domain;
+    typedef T Domain;
 
     TrivialLsh ()
     {
@@ -108,7 +109,7 @@ public:
  *     Proceedings of the twentieth annual symposium on Computational geometry, June
  *     08-11, 2004, Brooklyn, New York, USA.
 */
-template <typename DIST>
+template <typename DIST, typename T = const float *>
 class StableDistLsh
 {
     std::vector<float> a_;
@@ -127,7 +128,8 @@ public:
         float W;
     };
 
-    typedef const float *Domain;
+    //typedef const float *Domain;
+    typedef T Domain;
 
     StableDistLsh ()
     {
@@ -159,7 +161,7 @@ public:
         return 0;
     }
 
-    unsigned operator () (Domain obj) const
+    unsigned operator () (const float *obj) const
     {
         float ret = b_;
         for (unsigned i = 0; i < dim_; ++i)
@@ -169,12 +171,36 @@ public:
         return unsigned(int(std::floor(ret / W_)));
     }
 
-    unsigned operator () (Domain obj, float *delta) const
+    unsigned operator () (const float *obj, float *delta) const
     {
         float ret = b_;
         for (unsigned i = 0; i < dim_; ++i)
         {
             ret += a_[i] * obj[i];
+        }
+        ret /= W_;
+
+        float flr =  std::floor(ret);
+        *delta = ret - flr;
+        return unsigned(int(flr));
+    }
+
+    unsigned operator () (const SparseVector<float> &obj) const
+    {
+        float ret = b_;
+        for (unsigned i = 0; i < obj.size(); ++i)
+        {
+            ret += a_[obj[i].index] * obj[i].value;
+        }
+        return unsigned(int(std::floor(ret / W_)));
+    }
+
+    unsigned operator () (const SparseVector<float> &obj, float *delta) const
+    {
+        float ret = b_;
+        for (unsigned i = 0; i < obj.size(); ++i)
+        {
+            ret += a_[obj[i].index] * obj[i].value;
         }
         ret /= W_;
 
@@ -196,9 +222,14 @@ public:
 };
 
 /// LSH for L1 distance.
-typedef StableDistLsh<Cauchy> CauchyLsh;
+typedef StableDistLsh<Cauchy, const float *> CauchyLsh;
 /// LSH for L2 distance.
-typedef StableDistLsh<Gaussian> GaussianLsh;
+typedef StableDistLsh<Gaussian, const float *> GaussianLsh;
+
+/// LSH for L1 distance.
+typedef StableDistLsh<Cauchy, const SparseVector<float> &> CauchyLshSparse;
+/// LSH for L2 distance.
+typedef StableDistLsh<Gaussian, const SparseVector<float> &> GaussianLshSparse;
 
 /// Random hyperplane based LSH for cosine similarity.
 /**
@@ -226,6 +257,7 @@ typedef StableDistLsh<Gaussian> GaussianLsh;
  *      ACM, New York, NY, 380-388. DOI= http://doi.acm.org/10.1145/509907.509965 
  *
  */
+template <typename T = const float *>
 class HyperPlaneLsh
 {
     std::vector<float> a_;
@@ -239,7 +271,7 @@ public:
         /// Dimension of domain.
         unsigned dim;
     };
-    typedef const float *Domain;
+    typedef T Domain;
 
     HyperPlaneLsh ()
     {
@@ -264,7 +296,7 @@ public:
         return 2;
     }
 
-    unsigned operator () (Domain obj) const
+    unsigned operator () (const float *obj) const
     {
         float ret = 0;
         for (unsigned i = 0; i < a_.size(); ++i)
@@ -274,12 +306,41 @@ public:
         return ret >= 0 ? 1 : 0;
     }
 
-    unsigned operator () (Domain obj, float *delta) const
+    unsigned operator () (const float *obj, float *delta) const
     {
         float ret = 0;
         for (unsigned i = 0; i < a_.size(); ++i)
         {
             ret += a_[i] * obj[i];
+        }
+        if (ret >= 0)
+        {
+            *delta = ret;
+            return 1;
+        }
+        else
+        {
+            *delta = -ret;
+            return 0;
+        }
+    }
+
+    unsigned operator () (const SparseVector<float> &obj) const
+    {
+        float ret = 0;
+        for (unsigned i = 0; i < a_.size(); ++i)
+        {
+            ret += a_[obj[i].index] * obj[i].value;
+        }
+        return ret >= 0 ? 1 : 0;
+    }
+
+    unsigned operator () (const SparseVector<float> &obj, float *delta) const
+    {
+        float ret = 0;
+        for (unsigned i = 0; i < a_.size(); ++i)
+        {
+            ret += a_[obj[i].index] * obj[i].value;
         }
         if (ret >= 0)
         {
@@ -300,6 +361,7 @@ public:
     }
 };
 
+typedef HyperPlaneLsh<const SparseVector<float> &> HyperPlaneLshSparse;
 
 /// Random hyperplane based LSH for L1 distance.
 /**
