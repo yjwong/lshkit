@@ -63,7 +63,7 @@ void Matrix<T>::load (std::istream &is)
     BOOST_VERIFY(is);
     BOOST_VERIFY(header[0] == sizeof(T));
     reset(header[2], header[1]);
-    size_t sz = sizeof(T) * dim * N;
+    size_t sz = sizeof(T) * size_t(dim) * size_t(N);
     is.read((char *)dims, sz);
     BOOST_VERIFY(is);
 }
@@ -77,7 +77,7 @@ void Matrix<T>::save (std::ostream &os)
     header[2] = dim;
     os.write((char *)header, sizeof header);
     BOOST_VERIFY(os);
-    size_t sz = sizeof(T) * dim * N;
+    size_t sz = sizeof(T) * size_t(dim) * size_t(N);
     os.write((char *)dims, sz);
     BOOST_VERIFY(os);
 }
