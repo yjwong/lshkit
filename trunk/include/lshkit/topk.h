@@ -185,7 +185,7 @@ public:
                 }
             }
         }
-        return float(matched + 1)/float(this->size() + 1);
+        return float(matched)/float(this->size());
     }
 
     unsigned getK () const {
