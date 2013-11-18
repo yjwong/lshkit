@@ -43,6 +43,7 @@
 #ifdef CONCEPT_CHECK
 #include <lshkit/concept.h>
 #else
+#undef BOOST_CONCEPT_ASSERT
 #define BOOST_CONCEPT_ASSERT(A)
 #endif
 

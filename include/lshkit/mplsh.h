@@ -365,15 +365,15 @@ public:
 
     /// Query for K-NNs.
     /**
-      * @param obj the query object.
-      * @param scanner 
-      */
+    * @param obj the query object.
+    * @param scanner 
+    */
     template <typename SCANNER>
-    void query (Domain obj, unsigned T, SCANNER &scanner)
+    void query (Domain obj, unsigned t, SCANNER &scanner)
     {
         std::vector<unsigned> seq;
         for (unsigned i = 0; i < Super::lshs_.size(); ++i) {
-            Super::lshs_[i].genProbeSequence(obj, seq, T);
+            Super::lshs_[i].genProbeSequence(obj, seq, t);
             for (unsigned j = 0; j < seq.size(); ++j) {
                 typename Super::Bin &bin = Super::tables_[i][seq[j]];
                 BOOST_FOREACH(Key key, bin) {
@@ -418,6 +418,7 @@ public:
         }
     }
 };
+
 
 }
 

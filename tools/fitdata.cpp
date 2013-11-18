@@ -54,7 +54,6 @@ Allowed options:
 
 using namespace std;
 using namespace lshkit;
-using namespace tr1;
 namespace po = boost::program_options; 
 
 bool is_good_value (double v) {

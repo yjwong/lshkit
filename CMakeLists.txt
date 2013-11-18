@@ -1,40 +1,47 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
+# ============================================================================ #
+#  Search-A-Gram Instagram Social Network Searcher                             #
+#  http://gitlab.eugenecys.com/yjwong/cs3246_assignment3_searchagram           #
+# ============================================================================ #
+#  Copyright 2013 Wong Yong Jie                                                #
+#                                                                              #
+#  Licensed under the Apache License, Version 2.0 (the "License");             #
+#  you may not use this file except in compliance with the License.            #
+#  You may obtain a copy of the License at                                     #
+#                                                                              #
+#  http://www.apache.org/licenses/LICENSE-2.0                                  #
+#                                                                              #
+#  Unless required by applicable law or agreed to in writing, software         #
+#  distributed under the License is distributed on an "AS IS" BASIS,           #
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.    #
+#  See the License for the specific language governing permissions and         #
+#  limitations under the License.                                              #
+# ============================================================================ #
 
-PROJECT(LSHKIT)
+cmake_minimum_required (VERSION 2.8.11)
+project (lshkit)
 
-SET (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} cmake) 
+# Set the cmake modules path.
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${lshkit_SOURCE_DIR}/cmake/Modules")
 
+# Require GSL for building.
+find_package (GSL)
 
-#SET(CMAKE_CXX_FLAGS_DEBUG "-g")
-#SET(CMAKE_CXX_FLAGS_DEBUG "-O3 -g -pg -fno-inline -fno-default-inline")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -ffast-math")
-#SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -xP")
-#SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "-g -static")
-#SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "-g -pg")
-SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "-g -static")
-#SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
-#SET(CMAKE_SHARED_LIBRARY_C_FLAGS "")
-#SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+# Add additional include directories.
+include_directories (${lshkit_SOURCE_DIR}/include
+  ${GSL_INCLUDE_DIR}
+  ${Boost_INCLUDE_DIR})
 
-SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LSHKIT_BINARY_DIR}/lib)
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LSHKIT_BINARY_DIR}/bin)
-SET(CMAKE_DEBUG_POSTFIX _debug)
-SET(CMAKE_VERBOSE_MAKEFILE ON)
-SET(Boost_USE_STATIC_LIBS ON)
-#SET(BUILD_SHARED_LIBS FALSE)
-FIND_PACKAGE(GSL) 
-FIND_PACKAGE(Boost 1.35 COMPONENTS program_options)
+add_subdirectory (src)
 
-IF (Boost_FOUND)
-ELSE (Boost_FOUND)
-SET(Boost_INCLUDE_DIR ${LSHKIT_SOURCE_DIR}/3rd-party/boost)
-SET(Boost_LIBRARIES boost_program_options)
-ENDIF (Boost_FOUND)
-
-INCLUDE_DIRECTORIES(${LSHKIT_SOURCE_DIR}/include ${GSL_INCLUDE_DIR}
-    ${Boost_INCLUDE_DIR})
-LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
-
-ADD_SUBDIRECTORY("src")
-ADD_SUBDIRECTORY("tools")
+# Require boost for demo programs.
+option (BUILD_TOOLS "Build the tools for LSHKIT." OFF)
+if (BUILD_TOOLS)
+  find_package (Boost 1.35 COMPONENTS program_options)
+  if (NOT Boost_FOUND)
+    set (Boost_INCLUDE_DIR ${lshkit_SOURCE_DIR}/3rd-party/boost)
+    set (Boost_LIBRARIES boost_program_options)
+  endif ()
+  
+  add_subdirectory (tools)
+endif ()
 
